@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Винный Стек — Гид по бокалам для вина</title>
+    <!-- Подключаем CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Фоновые декоративные элементы -->
+    <div class="bg-glow glow-1"></div>
+    <div class="bg-glow glow-2"></div>
+    <div class="bg-glow glow-3"></div>
+
+    <!-- Шапка сайта -->
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <div class="logo">
+                    <span class="logo-icon">🍷</span>
+                    <span class="logo-text">Винный Стек</span>
+                </div>
+                <p class="tagline">Экспертный гид по бокалам для вина</p>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Главный баннер -->
+    <section class="hero">
+        <div class="container">
+            <h1 class="hero-title">
+                Подберём идеальный<br>
+                <span class="gradient-text">бокал для каждого вина</span>
+            </h1>
+            <p class="hero-subtitle">
+                10 экспертных карточек о формах, объёмах и материалах. Узнайте, как бокал меняет вкус и аромат напитка
+            </p>
+            <a href="#cards" class="hero-btn">
+                Изучить материалы
+                <svg class="btn-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M7 4L13 10L7 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </a>
+        </div>
+    </section>
+
+    <!-- Карточки с материалами -->
+    <section class="cards-section" id="cards">
+        <div class="container">
+            <h2 class="section-title">Дайджест материалов</h2>
+
+            <div class="cards-grid">
+
+                <!-- Карточка 1 -->
+                <article class="card" data-delay="0">
+                    <div class="card-glow"></div>
+                    <div class="card-icon">🍷</div>
+                    <h3 class="card-title">Бокал «Бордо» для красного вина</h3>
+                    <p class="card-text">
+                        Высокий бокал-тюльпан объёмом 500–650 мл. Направляет вино на заднюю часть языка, смягчая танины каберне совиньон, мерло и шираз.
+                    </p>
+                    <div class="card-tags">
+                        <span class="tag">красное</span>
+                        <span class="tag">Бордо</span>
+                    </div>
+                    <a href="https://dzen.ru/razborexpert" target="_blank" class="card-btn">
+                        Открыть материал
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </article>
+
+                <!-- Карточка 2 -->
+                <article class="card" data-delay="1">
+                    <div class="card-glow"></div>
+                    <div class="card-icon">🫧</div>
+                    <h3 class="card-title">Бокал «Бургундия» — шар для тонких вин</h3>
+                    <p class="card-text">
+                        Объёмная чаша 700–750 мл в форме шара. Раскрывает деликатные ароматы пино нуар, гей и барбера. Изобретён Клаусом Риделем.
+                    </p>
+                    <div class="card-tags">
+                        <span class="tag">красное</span>
+                        <span class="tag">Бургундия</span>
+                    </div>
+                    <a href="https://dzen.ru/razborexpert" target="_blank" class="card-btn">
+                        Открыть материал
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </article>
+
+                <!-- Карточка 3 -->
+                <article class="card" data-delay="2">
+                    <div class="card-glow"></div>
+                    <div class="card-icon">🥂</div>
+                    <h3 class="card-title">Флейта для шампанского</h3>
+                    <p class="card-text">
+                        Узкий вытянутый бокал 160–300 мл. Сохраняет пузырьки и низкую температуру игристого. Почему флейта — классика для молодых просекко и креманов.
+                    </p>
+                    <div class="card-tags">
+                        <span class="tag">игристое</span>
+                        <span class="tag">флейта</span>
+                    </div>
+                    <a href="https://dzen.ru/razborexpert" target="_blank" class="card-btn">
+                        Открыть материал
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </article>
+
+                <!-- Карточка 4 -->
+                <article class="card" data-delay="3">
+                    <div class="card-glow"></div>
+                    <div class="card-icon">🌷</div>
+                    <h3 class="card-title">Тюльпан — для выдержанного шампанского</h3>
+                    <p class="card-text">
+                        Расширение в центре и сужение кверху. Объём 200–350 мл. Раскрывает сложные ноты винтажных шампанских лучше, чем классическая флейта.
+                    </p>
+                    <div class="card-tags">
+                        <span class="tag">игристое</span>
+                        <span class="tag">тюльпан</span>
+                    </div>
+                    <a href="https://dzen.ru/razborexpert" target="_blank" class="card-btn">
+                        Открыть материал
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </article>
+
+                <!-- Карточка 5 -->
+                <article class="card" data-delay="4">
+                    <div class="card-glow"></div>
+                    <div class="card-icon">🤍</div>
+                    <h3 class="card-title">Бокал для белого вина</h3>
+                    <p class="card-text">
+                        Узкая вытянутая чаша 300–400 мл. Замедляет нагрев и сохраняет свежесть. Держим за ножку — тепло руки не должно греть вино.
+                    </p>
+                    <div class="card-tags">
+                        <span class="tag">белое</span>
+                        <span class="tag">температура</span>
+                    </div>
+                    <a href="https://dzen.ru/razborexpert" target="_blank" class="card-btn">
+                        Открыть материал
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </article>
+
+                <!-- Карточка 6 -->
+                <article class="card" data-delay="5">
+                    <div class="card-glow"></div>
+                    <div class="card-icon">🔮</div>
+                    <h3 class="card-title">Хрусталь vs стекло: что лучше?</h3>
+                    <p class="card-text">
+                        Хрустальное стекло прочнее обычного на 30%, звонче и прозрачнее. Можно мыть в посудомойке — в отличие от классического хрусталя со свинцом.
+                    </p>
+                    <div class="card-tags">
+                        <span class="tag">материал</span>
+                        <span class="tag">выбор</span>
+                    </div>
+                    <a href="https://dzen.ru/razborexpert" target="_blank" class="card-btn">
+                        Открыть материал
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </article>
+
+                <!-- Карточка 7 -->
+                <article class="card" data-delay="6">
+                    <div class="card-glow"></div>
+                    <div class="card-icon">🎯</div>
+                    <h3 class="card-title">Универсальный бокал: один на всё</h3>
+                    <p class="card-text">
+                        Объём 350–450 мл, слегка расширенная чаша. Подходит для красного, белого и розового. Идеальный стартовый выбор для дома — не нужно 10 разных бокалов.
+                    </p>
+                    <div class="card-tags">
+                        <span class="tag">универсал</span>
+                        <span class="tag">для дома</span>
+                    </div>
+                    <a href="https://dzen.ru/razborexpert" target="_blank" class="card-btn">
+                        Открыть материал
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </article>
+
+                <!-- Карточка 8 -->
+                <article class="card" data-delay="7">
+                    <div class="card-glow"></div>
+                    <div class="card-icon">🍾</div>
+                    <h3 class="card-title">Бокалы для десертных и креплёных вин</h3>
+                    <p class="card-text">
+                        Маленькие бокалы 60–120 мл для портвейна, хереса и мадеры. Концентрируют насыщенный аромат и контролируют порцию — крепкое вино пьют медленно.
+                    </p>
+                    <div class="card-tags">
+                        <span class="tag">десертное</span>
+                        <span class="tag">портвейн</span>
+                    </div>
+                    <a href="https://dzen.ru/razborexpert" target="_blank" class="card-btn">
+                        Открыть материал
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </article>
+
+                <!-- Карточка 9 -->
+                <article class="card" data-delay="8">
+                    <div class="card-glow"></div>
+                    <div class="card-icon">📐</div>
+                    <h3 class="card-title">Как форма бокала влияет на вкус</h3>
+                    <p class="card-text">
+                        Физика дегустации: широкий обод — больше кислорода — мягче танины. Узкий обод — концентрирует аромат — ярче кислотность. Почему это не маркетинг.
+                    </p>
+                    <div class="card-tags">
+                        <span class="tag">физика</span>
+                        <span class="tag">дегустация</span>
+                    </div>
+                    <a href="https://dzen.ru/razborexpert" target="_blank" class="card-btn">
+                        Открыть материал
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </article>
+
+                <!-- Карточка 10 -->
+                <article class="card" data-delay="9">
+                    <div class="card-glow"></div>
+                    <div class="card-icon">🧹</div>
+                    <h3 class="card-title">Уход за бокалами: 5 правил</h3>
+                    <p class="card-text">
+                        Никогда не мойте бокалы с моющим для посуды — запах остаётся. Как сушить, хранить и полировать, чтобы бокал служил годами без помутнений.
+                    </p>
+                    <div class="card-tags">
+                        <span class="tag">уход</span>
+                        <span class="tag">хранение</span>
+                    </div>
+                    <a href="https://dzen.ru/razborexpert" target="_blank" class="card-btn">
+                        Открыть материал
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </article>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Подвал -->
+    <footer class="footer">
+        <div class="container">
+            <p>
+                Материалы основаны на публикациях
+                <a href="https://dzen.ru/razborexpert" target="_blank">dzen.ru/razborexpert</a>
+            </p>
+            <p class="footer-note">Информация носит ознакомительный характер.</p>
+        </div>
+    </footer>
+
+    <!-- Подключаем JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
