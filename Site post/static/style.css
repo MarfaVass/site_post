@@ -1,0 +1,491 @@
+/* ============================================================
+   ОСНОВНЫЕ СТИЛИ
+   Здесь можно менять цвета, шрифты и общий вид сайта
+   ============================================================ */
+
+/* Цветовая палитра — можно менять под свой бренд */
+:root {
+    --color-primary: #722F37;        /* Основной цвет — винный */
+    --color-primary-light: #8B3A42;  /* Светлее */
+    --color-primary-dark: #5C242B;   /* Темнее */
+    --color-accent: #D4A574;         /* Акцент — золотистый */
+    --color-accent-light: #E8C9A0;   /* Светлый акцент */
+    --color-bg: #FAF7F5;             /* Фон страницы */
+    --color-card: #FFFFFF;           /* Фон карточек */
+    --color-text: #2D2D2D;           /* Основной текст */
+    --color-text-light: #6B6B6B;     /* Светлый текст */
+    --color-border: #E5DDD8;         /* Границы */
+    --color-success: #4CAF50;        /* Успех */
+    --color-error: #E74C3C;          /* Ошибка */
+    --color-error-bg: #FDECEA;       /* Фон ошибки */
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.1);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* ============================================================
+   ШАПКА
+   ============================================================ */
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.header-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.header h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    color: var(--color-text-light);
+    font-weight: 300;
+}
+
+/* ============================================================
+   ФОРМА
+   ============================================================ */
+.form-section {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 32px;
+}
+
+.post-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-label {
+    font-weight: 500;
+    font-size: 1rem;
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.label-icon {
+    font-size: 1.2rem;
+}
+
+.required {
+    color: var(--color-error);
+    font-weight: 600;
+}
+
+.form-select,
+.form-input {
+    padding: 14px 16px;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--color-text);
+    background: var(--color-bg);
+    transition: all 0.2s ease;
+}
+
+.form-select:focus,
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(114, 47, 55, 0.1);
+}
+
+.form-select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236B6B6B' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+}
+
+.form-input::placeholder {
+    color: var(--color-text-light);
+    opacity: 0.6;
+}
+
+.input-hint {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* ============================================================
+   НАСТРОЕНИЕ (карточки выбора)
+   ============================================================ */
+.mood-options {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.mood-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 8px;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--color-bg);
+}
+
+.mood-card:hover {
+    border-color: var(--color-primary-light);
+    background: rgba(114, 47, 55, 0.05);
+}
+
+.mood-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.mood-card input[type="radio"]:checked + .mood-icon + .mood-text,
+.mood-card:has(input[type="radio"]:checked) {
+    border-color: var(--color-primary);
+    background: rgba(114, 47, 55, 0.08);
+    box-shadow: 0 0 0 2px rgba(114, 47, 55, 0.15);
+}
+
+.mood-icon {
+    font-size: 1.8rem;
+}
+
+.mood-text {
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* ============================================================
+   КНОПКА ГЕНЕРАЦИИ
+   ============================================================ */
+.generate-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 32px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 1.1rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(114, 47, 55, 0.3);
+    margin-top: 8px;
+}
+
+.generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(114, 47, 55, 0.4);
+}
+
+.generate-btn:active {
+    transform: translateY(0);
+}
+
+.generate-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-icon {
+    font-size: 1.3rem;
+}
+
+/* ============================================================
+   СООБЩЕНИЕ ОБ ОШИБКЕ
+   ============================================================ */
+.error-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+    background: var(--color-error-bg);
+    border: 1px solid var(--color-error);
+    border-radius: var(--radius-sm);
+    color: var(--color-error);
+    margin-top: 16px;
+    font-weight: 500;
+}
+
+.error-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   РЕЗУЛЬТАТ
+   ============================================================ */
+.result-section {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 32px;
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.result-header h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.5rem;
+    color: var(--color-primary);
+}
+
+/* Кнопка копирования */
+.copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+    background: var(--color-primary);
+}
+
+.copy-icon {
+    font-size: 1.1rem;
+}
+
+/* Сообщение о копировании */
+.copy-message {
+    text-align: center;
+    padding: 12px 20px;
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid var(--color-success);
+    border-radius: var(--radius-sm);
+    color: var(--color-success);
+    font-weight: 500;
+    margin-bottom: 24px;
+    animation: fadeIn 0.3s ease;
+}
+
+/* ============================================================
+   ИНФОРМАЦИЯ О БОКАЛЕ
+   ============================================================ */
+.glass-info {
+    background: linear-gradient(135deg, rgba(114, 47, 55, 0.05), rgba(212, 165, 116, 0.08));
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.glass-info-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.2rem;
+    color: var(--color-primary);
+    margin-bottom: 16px;
+}
+
+.glass-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.glass-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.glass-detail.full-width {
+    grid-column: 1 / -1;
+}
+
+.detail-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    font-size: 1rem;
+    color: var(--color-text);
+    line-height: 1.5;
+}
+
+/* ============================================================
+   ТЕКСТ ПОСТА
+   ============================================================ */
+.post-content {
+    background: var(--color-bg);
+    border-radius: var(--radius-sm);
+    padding: 24px;
+    margin-bottom: 24px;
+    line-height: 1.8;
+    font-size: 1rem;
+    white-space: pre-wrap;
+}
+
+.post-content strong {
+    color: var(--color-primary);
+}
+
+/* ============================================================
+   ССЫЛКА НА ДЗЕН
+   ============================================================ */
+.dzen-link {
+    display: block;
+    text-align: center;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: white;
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 1.05rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(114, 47, 55, 0.3);
+}
+
+.dzen-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(114, 47, 55, 0.4);
+}
+
+/* ============================================================
+   ПОДВАЛ
+   ============================================================ */
+.footer {
+    text-align: center;
+    padding: 32px 0;
+    color: var(--color-text-light);
+    font-size: 0.9rem;
+}
+
+.footer a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+
+/* ============================================================
+   УТИЛИТЫ
+   ============================================================ */
+.hidden {
+    display: none !important;
+}
+
+/* ============================================================
+   АДАПТИВНОСТЬ (мобильные устройства)
+   ============================================================ */
+@media (max-width: 640px) {
+    .container {
+        padding: 24px 16px;
+    }
+
+    .header h1 {
+        font-size: 1.8rem;
+    }
+
+    .subtitle {
+        font-size: 0.95rem;
+    }
+
+    .form-section,
+    .result-section {
+        padding: 24px 20px;
+    }
+
+    .mood-options {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .glass-details {
+        grid-template-columns: 1fr;
+    }
+
+    .result-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
+
+    .copy-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

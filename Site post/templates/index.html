@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор постов для блога эксперта по бокалам</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка -->
+        <header class="header">
+            <div class="header-icon">🥂</div>
+            <h1>Генератор постов</h1>
+            <p class="subtitle">Экспертный контент о бокалах для вина — за пару кликов</p>
+        </header>
+
+        <!-- Основной контент -->
+        <main class="main-content">
+            <!-- Форма -->
+            <section class="form-section">
+                <form id="postForm" class="post-form">
+                    <!-- Тип вина -->
+                    <div class="form-group">
+                        <label for="wine_type" class="form-label">
+                            <span class="label-icon">🍷</span>
+                            Тип вина <span class="required">*</span>
+                        </label>
+                        <select id="wine_type" name="wine_type" class="form-select" required>
+                            <option value="" disabled selected>Выберите тип вина</option>
+                            <option value="still">Тихое</option>
+                            <option value="sparkling">Игристое</option>
+                        </select>
+                    </div>
+
+                    <!-- Уточнение для игристого (скрыто по умолчанию) -->
+                    <div id="champagne_section" class="form-group hidden">
+                        <label for="champagne_type" class="form-label">
+                            <span class="label-icon">🍾</span>
+                            Уточните тип игристого <span class="required">*</span>
+                        </label>
+                        <select id="champagne_type" name="champagne_type" class="form-select">
+                            <option value="" disabled selected>Выберите тип</option>
+                            <option value="champagne">Шампанское</option>
+                            <option value="sparkling_wine">Игристое вино</option>
+                        </select>
+                    </div>
+
+                    <!-- Цвет вина -->
+                    <div class="form-group">
+                        <label for="wine_color" class="form-label">
+                            <span class="label-icon">🎨</span>
+                            Цвет вина <span class="required">*</span>
+                        </label>
+                        <select id="wine_color" name="wine_color" class="form-select" required>
+                            <option value="" disabled selected>Выберите цвет вина</option>
+                            <option value="красное">Красное</option>
+                            <option value="белое">Белое</option>
+                            <option value="розовое">Розовое</option>
+                        </select>
+                    </div>
+
+                    <!-- Сорт винограда -->
+                    <div class="form-group">
+                        <label for="grape" class="form-label">
+                            <span class="label-icon">🍇</span>
+                            Сорт винограда <span class="required">*</span>
+                        </label>
+                        <input type="text" id="grape" name="grape" class="form-input" 
+                               placeholder="Например: Каберне Совиньон, Шардоне, Пино Нуар..." 
+                               required autocomplete="off">
+                        <p class="input-hint">Введите сорт — мы автоматически исправим возможные ошибки в написании</p>
+                    </div>
+
+                    <!-- Настроение поста -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="label-icon">✨</span>
+                            Настроение поста <span class="required">*</span>
+                        </label>
+                        <div class="mood-options">
+                            <label class="mood-card">
+                                <input type="radio" name="mood" value="happy" required>
+                                <span class="mood-icon">😊</span>
+                                <span class="mood-text">Радостное</span>
+                            </label>
+                            <label class="mood-card">
+                                <input type="radio" name="mood" value="romantic">
+                                <span class="mood-icon">🌹</span>
+                                <span class="mood-text">Романтичное</span>
+                            </label>
+                            <label class="mood-card">
+                                <input type="radio" name="mood" value="expert">
+                                <span class="mood-icon">🎯</span>
+                                <span class="mood-text">Экспертное</span>
+                            </label>
+                            <label class="mood-card">
+                                <input type="radio" name="mood" value="relaxed">
+                                <span class="mood-icon">🌿</span>
+                                <span class="mood-text">Расслабленное</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Кнопка генерации -->
+                    <button type="submit" class="generate-btn" id="generateBtn">
+                        <span class="btn-icon">✨</span>
+                        Сформировать пост
+                    </button>
+                </form>
+
+                <!-- Сообщение об ошибке -->
+                <div id="errorMessage" class="error-message hidden">
+                    <span class="error-icon">⚠️</span>
+                    <span id="errorText"></span>
+                </div>
+            </section>
+
+            <!-- Результат -->
+            <section id="resultSection" class="result-section hidden">
+                <div class="result-header">
+                    <h2>Готовый пост</h2>
+                    <button class="copy-btn" id="copyBtn" onclick="copyPost()">
+                        <span class="copy-icon">📋</span>
+                        Скопировать пост
+                    </button>
+                </div>
+
+                <!-- Сообщение о копировании -->
+                <div id="copyMessage" class="copy-message hidden">
+                    ✅ Пост скопирован!
+                </div>
+
+                <!-- Информация о бокале -->
+                <div class="glass-info">
+                    <h3 class="glass-info-title">🫗 Рекомендация по бокалу</h3>
+                    <div class="glass-details">
+                        <div class="glass-detail">
+                            <span class="detail-label">Тип:</span>
+                            <span id="glassType" class="detail-value"></span>
+                        </div>
+                        <div class="glass-detail">
+                            <span class="detail-label">Форма:</span>
+                            <span id="glassDescription" class="detail-value"></span>
+                        </div>
+                        <div class="glass-detail">
+                            <span class="detail-label">Объём:</span>
+                            <span id="glassVolume" class="detail-value"></span>
+                        </div>
+                        <div class="glass-detail full-width">
+                            <span class="detail-label">Почему:</span>
+                            <span id="glassWhy" class="detail-value"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Текст поста -->
+                <div class="post-content" id="postContent">
+                    <!-- Здесь будет сгенерированный пост -->
+                </div>
+
+                <!-- Кнопка перехода в блог -->
+                <a href="https://dzen.ru/razborexpert" target="_blank" class="dzen-link">
+                    📖 Перейти в блог эксперта на Дзене
+                </a>
+            </section>
+        </main>
+
+        <!-- Подвал -->
+        <footer class="footer">
+            <p>Создано для блога эксперта по бокалам · <a href="https://dzen.ru/razborexpert" target="_blank">dzen.ru/razborexpert</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // Показываем/скрываем уточнение для игристого
+        document.getElementById('wine_type').addEventListener('change', function() {
+            const champagneSection = document.getElementById('champagne_section');
+            if (this.value === 'sparkling') {
+                champagneSection.classList.remove('hidden');
+                document.getElementById('champagne_type').required = true;
+            } else {
+                champagneSection.classList.add('hidden');
+                document.getElementById('champagne_type').required = false;
+                document.getElementById('champagne_type').value = '';
+            }
+        });
+
+        // Отправка формы
+        document.getElementById('postForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Скрываем предыдущие ошибки и результаты
+            document.getElementById('errorMessage').classList.add('hidden');
+            document.getElementById('resultSection').classList.add('hidden');
+            document.getElementById('copyMessage').classList.add('hidden');
+
+            // Собираем данные формы
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            // Показываем загрузку
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="btn-icon">⏳</span> Генерируем...';
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(data)
+                });
+
+                const result = await response.json();
+
+                if (result.error) {
+                    // Показываем ошибку
+                    document.getElementById('errorText').textContent = result.error;
+                    document.getElementById('errorMessage').classList.remove('hidden');
+                } else {
+                    // Заполняем результат
+                    document.getElementById('glassType').textContent = result.glass_type;
+                    document.getElementById('glassDescription').textContent = result.glass_description;
+                    document.getElementById('glassVolume').textContent = result.glass_volume;
+                    document.getElementById('glassWhy').textContent = result.glass_why;
+                    
+                    // Форматируем текст поста
+                    const postContent = result.full_post.replace(/\n/g, '<br>');
+                    document.getElementById('postContent').innerHTML = postContent;
+
+                    // Показываем секцию результата
+                    document.getElementById('resultSection').classList.remove('hidden');
+
+                    // Плавная прокрутка к результату
+                    document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            } catch (error) {
+                document.getElementById('errorText').textContent = 'Произошла ошибка. Попробуйте снова.';
+                document.getElementById('errorMessage').classList.remove('hidden');
+            } finally {
+                // Восстанавливаем кнопку
+                btn.disabled = false;
+                btn.innerHTML = '<span class="btn-icon">✨</span> Сформировать пост';
+            }
+        });
+
+        // Копирование поста
+        function copyPost() {
+            const postContent = document.getElementById('postContent');
+            const text = postContent.innerText;
+
+            navigator.clipboard.writeText(text).then(() => {
+                const copyMsg = document.getElementById('copyMessage');
+                copyMsg.classList.remove('hidden');
+
+                // Скрываем сообщение через 3 секунды
+                setTimeout(() => {
+                    copyMsg.classList.add('hidden');
+                }, 3000);
+            }).catch(() => {
+                // Фолбэк для старых браузеров
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+
+                const copyMsg = document.getElementById('copyMessage');
+                copyMsg.classList.remove('hidden');
+                setTimeout(() => {
+                    copyMsg.classList.add('hidden');
+                }, 3000);
+            });
+        }
+    </script>
+</body>
+</html>
