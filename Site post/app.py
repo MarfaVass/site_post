@@ -1,15 +1,14 @@
 from flask import Flask, render_template, request, jsonify
-import re
+import random
 
 app = Flask(__name__)
 
 # ============================================================
-# БАЗА ЗНАНИЙ О СОРТАХ ВИНОГРАДА И БОКАЛАХ
+# БАЗА ЗНАНИЙ О СОРТАХ ВИНОГРАДА И БОКАЛАХ (для тихих вин)
 # Здесь можно добавлять новые сорта и рекомендации по бокалам
 # ============================================================
 
 # Словарь распространённых ошибок написания сортов винограда
-# Формат: {"ошибочный_вариант": "правильный_вариант"}
 GRAPE_TYPOS = {
     "каберне": "Каберне Совиньон",
     "каберне сов": "Каберне Совиньон",
@@ -46,7 +45,6 @@ GRAPE_TYPOS = {
     "темпранийо": "Темпранийо",
     "темпранильо": "Темпранийо",
     "мальбек": "Мальбек",
-    "мальбек": "Мальбек",
     "грарнаш": "Гренаш",
     "гарнача": "Гренаш",
     "мускат": "Мускат",
@@ -67,12 +65,11 @@ GRAPE_TYPOS = {
     "торонтесс": "Торронтес",
 }
 
-# База данных рекомендаций по бокалам для каждого сорта
-# Формат: {"сорт": {"glass_type", "description", "volume", "why"}}
+# База данных рекомендаций по бокалам для каждого сорта тихого вина
 GLASS_RECOMMENDATIONS = {
     "Каберне Совиньон": {
         "glass_type": "Бордо",
-        "description": "Высокий бокал с широким бокалом и зауженным краем, объёмом 600-750 мл",
+        "description": "Высокий бокал с широким туловом и зауженным краем, объёмом 600-750 мл",
         "volume": "600-750 мл",
         "why": "Высокая форма направляет вино к дальней части нёба, смягчая танины и подчёркивая фруктовые ноты. Зауженный край концентрирует ароматы чёрной смородины и кедра."
     },
@@ -234,13 +231,101 @@ GLASS_RECOMMENDATIONS = {
     },
 }
 
-# Рекомендации по бокалам для игристых вин
-SPARKLING_GLASS = {
-    "glass_type": "Флюте (фужер для шампанского) или Тулип",
-    "description": "Узкий вытянутый бокал на длинной ножке, объёмом 150-250 мл",
-    "volume": "150-250 мл",
-    "why": "Узкая форма сохраняет пузырьки и концентрирует тонкие ароматы. Тулип (с лёгким расширением кверху) предпочтительнее классической флюте — лучше раскрывает ароматику."
+# ============================================================
+# БАЗА ЗНАНИЙ ОБ ИГРИСТЫХ ВИНАХ И БОКАЛАХ
+# Здесь можно добавлять новые типы игристых и рекомендации
+# ============================================================
+SPARKLING_TYPES = {
+    "prosecco": {
+        "name": "Просекко",
+        "description": "Итальянское игристое из винограда Глера, произведённое методом Шарма",
+        "glass_type": "Тулип (фужер-тюльпан)",
+        "glass_description": "Бокал с вытянутым туловом, слегка расширяющимся кверху и сужающимся к краю, объёмом 200-300 мл",
+        "glass_volume": "200-300 мл",
+        "glass_why": "Форма «тюльпан» лучше классической флюте раскрывает свежие цветочные и фруктовые ароматы Просекко — зелёное яблоко, грушу, акацию. Сужение к краю сохраняет пузырьки, а лёгкое расширение даёт простор для ароматики."
+    },
+    "champagne": {
+        "name": "Шампанское",
+        "description": "Классическое французское игристое из Шампани, произведённое традиционным методом",
+        "glass_type": "Тулип или флюте премиум-класса",
+        "glass_description": "Элегантный узкий бокал на длинной ножке с тонкими стенками, объёмом 200-300 мл",
+        "glass_volume": "200-300 мл",
+        "glass_why": "Для шампанского критически важно сохранить тонкий перляж и сложные ноты бриошь, цитрусовых и минералов. Тулип раскрывает ароматику выдержанных кюве лучше классической флюте. Тонкие стенки не искажают восприятие."
+    },
+    "moscato": {
+        "name": "Москато (Асти)",
+        "description": "Сладкое игристое из Муската, лёгкое и ароматное",
+        "glass_type": "Универсальный белый или небольшая флюте",
+        "glass_description": "Элегантный бокал среднего размера, объёмом 180-250 мл",
+        "glass_volume": "180-250 мл",
+        "glass_why": "Москато — сладкое и лёгкое вино, поэтому не нужен огромный бокал. Компактная форма концентрирует интенсивные ароматы персика, апельсинового цвета и мёда. Умеренный объём подчёркивает питкость."
+    },
+    "cava": {
+        "name": "Кава",
+        "description": "Испанское игристое из Каталонии, произведённое традиционным методом",
+        "glass_type": "Тулип (фужер-тюльпан)",
+        "glass_description": "Бокал с вытянутым туловом и зауженным краем, объёмом 200-300 мл",
+        "glass_volume": "200-300 мл",
+        "glass_why": "Кава часто имеет более выраженные тостовые и ореховые ноты благодаря выдержке на осадке. Тулип раскрывает эти нюансы и при этом сохраняет свежую цитрусовую основу и мелкие пузырьки."
+    },
+    "cremant": {
+        "name": "Кремано",
+        "description": "Французское игристое из регионов за пределами Шампани",
+        "glass_type": "Тулип или Бургундия (небольшой)",
+        "glass_description": "Бокал с округлым туловом, объёмом 250-350 мл",
+        "glass_volume": "250-350 мл",
+        "glass_why": "Кремано часто делают из сортов Пино Нуар и Шардоне, поэтому бокал типа Бургундия раскрывает сложные ароматику, как у шампанского. Тулип — более универсальный вариант, подходящий для любого кремано."
+    },
+    "franciacorta": {
+        "name": "Франчакорто",
+        "description": "Итальянское игристое премиум-класса из Ломбардии, традиционный метод",
+        "glass_type": "Тулип или флюте премиум",
+        "glass_description": "Тонкостенный бокал на длинной ножке, объёмом 200-300 мл",
+        "glass_volume": "200-300 мл",
+        "glass_why": "Франчакорто — вино премиального уровня с богатой ароматикой. Тулип раскрывает ноты хлебной корки, мёда и цитрусовых, сохраняя элегантный перляж. Тонкие стенки подчёркивают качество стекла."
+    },
+    "lambusco": {
+        "name": "Ламбруско",
+        "description": "Итальянское игристое красное (или розовое) из Эмилии-Романьи",
+        "glass_type": "Универсальный для красного или тюльпан",
+        "glass_description": "Бокал среднего размера с округлым туловом, объёмом 300-400 мл",
+        "glass_volume": "300-400 мл",
+        "glass_why": "Ламбруско — необычное игристое красное вино, которому нужен более широкий бокал, чем для белых игристых. Округлая форма раскрывает ягодные ноты (вишня, ежевика) и свежесть, характерную для Ламбруско."
+    },
+    "pet_nat": {
+        "name": "Пет-нат (Pétillant Naturel)",
+        "description": "Натуральное игристое, произведённое методом ancestrale",
+        "glass_type": "Универсальный или тюльпан",
+        "glass_description": "Бокал среднего размера, объёмом 250-350 мл",
+        "glass_volume": "250-350 мл",
+        "glass_why": "Пет-нат — живое, нефильтрованное вино с характером. Универсальный бокал даёт свободу для раскрытия его многогранной ароматики — от фруктовой до фанковой. Тюльпан лучше структурирует пузырьки."
+    },
+    "sekt": {
+        "name": "Зект",
+        "description": "Немецкое игристое вино, от лёгкого до премиального",
+        "glass_type": "Флюте или Рислинг (тонкостенный)",
+        "glass_description": "Элегантный узкий бокал на высокой ножке, объёмом 200-300 мл",
+        "glass_volume": "200-300 мл",
+        "glass_why": "Немецкие зекты часто делаются из Рислинга, поэтому бокал для Рислинга раскрывает деликатные цветочные ароматы и минеральность. Для премиальных зектов — тюльпан, чтобы раскрыть сложность."
+    },
+    "english_sparkling": {
+        "name": "Английское игристое",
+        "description": "Игристое из Англии, часто из Шардоне и Пино Нуар",
+        "glass_type": "Тулип или Бургундия (небольшой)",
+        "glass_description": "Бокал с округлым туловом, объёмом 250-350 мл",
+        "glass_volume": "250-350 мл",
+        "glass_why": "Английские игристые по качеству сопоставимы с шампанским. Тулип раскрывает ноты зелёного яблока, цитрусовых и бриошь, сохраняя элегантный перляж и минеральный финиш."
+    },
+    "trentodoc": {
+        "name": "Тренто DOC",
+        "description": "Итальянское игристое из Трентино, традиционный метод",
+        "glass_type": "Тулип премиум",
+        "glass_description": "Тонкостенный бокал с элегантным сужением, объёмом 200-300 мл",
+        "glass_volume": "200-300 мл",
+        "glass_why": "Тренто DOC — вино горного терруара с яркой кислотностью. Тулип подчёркивает свежесть и раскрывает ноты белых фруктов, хлебной корки и альпийских трав."
+    },
 }
+
 
 # ============================================================
 # НАСТРОЙКИ ТОНА И СТИЛЯ ПОСТА
@@ -269,11 +354,11 @@ BASE_HASHTAGS = ["#бокалы", "#вино", "#сомелье", "#винный
 
 # ============================================================
 # НАБОРЫ ЭМОДЗИ ДЛЯ РАЗНЫХ ТОНОВ
-# Можно добавлять свои эмодзи или менять набор
 # ============================================================
 EMOJI_SETS = {
     "wine": ["🍷", "🍇", "✨", "🥂", "🌿", "💎", "🫧", "🍾"],
     "glass": ["🥃", "🫗", "✨", "💎", "🌟"],
+    "sparkling": ["🥂", "🫧", "✨", "🍾", "🎆"],
     "mood_happy": ["😊", "✨", "🌟", "💫", "🎉"],
     "mood_romantic": ["🌹", "💕", "✨", "🌙", "💫"],
     "mood_expert": ["📚", "🎯", "💡", "🔍", "🏆"],
@@ -289,27 +374,23 @@ def correct_grape_name(grape_input):
     original = grape_input.strip()
     lower = original.lower().strip()
 
-    # Проверяем точное совпадение
     if lower in GRAPE_TYPOS:
         return GRAPE_TYPOS[lower], True
 
-    # Проверяем частичное совпадение (если пользователь ввёл часть названия)
     for typo, correct in GRAPE_TYPOS.items():
         if lower in typo or typo in lower:
             return correct, True
 
-    # Если не нашли — возвращаем как есть, но с заглавной буквы
     return original.capitalize() if len(original) > 1 else original, False
 
 
-def get_emoji_set(mood, count="moderate"):
+def get_emoji_set(mood, count="moderate", is_sparkling=False):
     """
     Возвращает набор эмодзи в зависимости от настроения и количества.
     """
     if count == "none":
         return ""
 
-    # Выбираем набор по настроению
     mood_map = {
         "happy": "mood_happy",
         "romantic": "mood_romantic",
@@ -318,7 +399,6 @@ def get_emoji_set(mood, count="moderate"):
     }
     mood_key = mood_map.get(mood, "mood_happy")
 
-    # Определяем количество
     count_map = {
         "few": 2,
         "moderate": 4,
@@ -326,26 +406,28 @@ def get_emoji_set(mood, count="moderate"):
     }
     num = count_map.get(count, 4)
 
-    # Берём эмодзи из наборов
-    emojis = EMOJI_SETS["wine"][:2] + EMOJI_SETS[mood_key][:num]
+    if is_sparkling:
+        emojis = EMOJI_SETS["sparkling"][:2] + EMOJI_SETS[mood_key][:num]
+    else:
+        emojis = EMOJI_SETS["wine"][:2] + EMOJI_SETS[mood_key][:num]
     return " ".join(emojis[:num + 2])
 
 
-def generate_title(grape, wine_type, wine_color, title_style, emojis):
+def generate_title_still(grape, wine_color, title_style, emojis):
     """
-    Генерирует заголовок поста в зависимости от выбранного стиля.
+    Генерирует заголовок для тихого вина.
     """
     e = f" {emojis}" if emojis else ""
 
     if title_style == "question":
         titles = [
-            f"Какой бокал раскроет вкус вашего {grape}{e}?",
+            f"Какой бокал раскроет вкус вашего {wine_color}го {grape}{e}?",
             f"Правильный бокал для {grape}: знаете ли вы, какой выбрать{e}?",
             f"{grape}: в каком бокале он звучит по-настоящему{e}?",
         ]
     elif title_style == "statement":
         titles = [
-            f"Идеальный бокал для {grape}{e}",
+            f"Идеальный бокал для {wine_color}го {grape}{e}",
             f"Лучший бокал для вина из винограда {grape}{e}",
             f"Бокал, который подчеркнёт характер {grape}{e}",
         ]
@@ -353,24 +435,56 @@ def generate_title(grape, wine_type, wine_color, title_style, emojis):
         titles = [
             f"Как выбрать бокал для {grape}: гид от эксперта{e}",
             f"Как раскрыть вкус {grape} с помощью правильного бокала{e}",
-            f"Как подобрать бокал под {grape}: пошаговая рекомендация{e}",
+            f"Как подобрать бокал под {wine_color}ое {grape}: пошаговая рекомендация{e}",
         ]
     else:  # intriguing
         titles = [
             f"Секрет раскрытия вкуса {grape}: всё дело в бокале{e}",
-            f"Почему {grape} звучит по-другому в правильном бокале{e}",
+            f"Почему {wine_color}ое {grape} звучит по-другому в правильном бокале{e}",
             f"То, что сомелье знают о бокалах для {grape}{e}",
         ]
 
-    import random
     return random.choice(titles)
 
 
-def generate_post_body(wine_type, wine_color, grape, glass_info, mood, tone, length):
+def generate_title_sparkling(sparkling_name, title_style, emojis):
     """
-    Генерирует основной текст поста.
+    Генерирует заголовок для игристого вина.
     """
-    # Определяем вводные фразы в зависимости от тона
+    e = f" {emojis}" if emojis else ""
+
+    if title_style == "question":
+        titles = [
+            f"В каком бокале ваше {sparkling_name} раскроется лучше всего{e}?",
+            f"Правильный бокал для {sparkling_name}: знаете ли вы, какой выбрать{e}?",
+            f"{sparkling_name}: в каком бокале пузырьки звучат по-настоящему{e}?",
+        ]
+    elif title_style == "statement":
+        titles = [
+            f"Идеальный бокал для {sparkling_name}{e}",
+            f"Лучший бокал для подачи {sparkling_name}{e}",
+            f"Бокал, который подчеркнёт характер {sparkling_name}{e}",
+        ]
+    elif title_style == "howto":
+        titles = [
+            f"Как выбрать бокал для {sparkling_name}: гид от эксперта{e}",
+            f"Как раскрыть вкус {sparkling_name} с помощью правильного бокала{e}",
+            f"Как подать {sparkling_name} идеально: выбор бокала{e}",
+        ]
+    else:  # intriguing
+        titles = [
+            f"Секрет идеальной подачи {sparkling_name}: всё дело в бокале{e}",
+            f"Почему {sparkling_name} звучит по-другому в правильном бокале{e}",
+            f"То, что сомелье знают о бокалах для {sparkling_name}{e}",
+        ]
+
+    return random.choice(titles)
+
+
+def generate_post_body_still(wine_color, grape, glass_info, mood, tone, length):
+    """
+    Генерирует основной текст поста для тихого вина.
+    """
     if tone == "friendly":
         intro_phrases = [
             f"Приветствую, друзья! Сегодня поговорим о том, как правильный бокал может превратить бокал {wine_color}го вина из винограда {grape} в настоящее удовольствие.",
@@ -392,19 +506,11 @@ def generate_post_body(wine_type, wine_color, grape, glass_info, mood, tone, len
             f"Когда речь заходит о {grape}, каждая деталь имеет значение. Особенно — бокал, в котором вы подаёте это благородное вино.",
         ]
 
-    # Основной текст в зависимости от типа вина
-    if wine_type == "sparkling":
-        body_sections = [
-            f"Для игристого вина из винограда {grape} ключевой момент — сохранение пузырьков и ароматики. Именно поэтому классическая флюте — не всегда лучший выбор.",
-            f"Современные сомелье рекомендуют бокал типа «тюльпан» для игристых вин — он лучше раскрывает ароматику и при этом сохраняет перляж.",
-        ]
-    else:
-        body_sections = [
-            f"Для тихого {wine_color}го вина из винограда {grape} критически важно подобрать бокал, который подчеркнёт его характер и раскроет букет.",
-            f"Форма бокала влияет на то, как вино контактирует с воздухом, как ароматы достигают обонятельных рецепторов и как вино ощущается на нёбе.",
-        ]
+    body_sections = [
+        f"Для тихого {wine_color}го вина из винограда {grape} критически важно подобрать бокал, который подчеркнёт его характер и раскроет букет.",
+        f"Форма бокала влияет на то, как вино контактирует с воздухом, как ароматы достигают обонятельных рецепторов и как вино ощущается на нёбе.",
+    ]
 
-    # Рекомендация по бокалу
     glass_section = f"""Рекомендация по бокалу:
 
 🫗 Тип: {glass_info['glass_type']}
@@ -413,15 +519,12 @@ def generate_post_body(wine_type, wine_color, grape, glass_info, mood, tone, len
 
 Почему именно этот бокал? {glass_info['why']}"""
 
-    # Дополнительные абзацы для длинного поста
     extra_long = [
         f"Интересный факт: форма бокала для {grape} формировалась десятилетиями. Сомелье и производители бокалов проводили десятки дегустаций, чтобы найти идеальную геометрию.",
         f"Помните: температура подачи не менее важна. {wine_color.capitalize()}ое вино из {grape} лучше раскрывается при правильной температуре, а подходящий бокал помогает её поддерживать.",
         f"Совет от эксперта: перед подачей ополосните бокал тёплой водой без моющего средства — это уберёт посторонние запахи и позволит {grape} раскрыться в полной мере.",
     ]
 
-    # Собираем пост в зависимости от длины
-    import random
     intro = random.choice(intro_phrases)
     body = "\n\n".join(body_sections)
 
@@ -430,27 +533,84 @@ def generate_post_body(wine_type, wine_color, grape, glass_info, mood, tone, len
     elif length == "medium":
         extra = random.choice(extra_long)
         content = f"{intro}\n\n{body}\n\n{extra}\n\n{glass_section}"
-    else:  # long
+    else:
         content = f"{intro}\n\n{body}\n\n" + "\n\n".join(extra_long) + f"\n\n{glass_section}"
 
     return content
 
 
-def generate_hashtags(wine_type, wine_color, grape, mood):
+def generate_post_body_sparkling(sparkling_info, mood, tone, length):
     """
-    Генерирует хэштеги для поста.
+    Генерирует основной текст поста для игристого вина.
+    """
+    name = sparkling_info["name"]
+    desc = sparkling_info["description"]
+
+    if tone == "friendly":
+        intro_phrases = [
+            f"Приветствую, друзья! Сегодня разберём, в каком бокале {name} раскроется лучше всего. Это игристое заслуживает правильной подачи!",
+            f"Рад поделиться с вами темой, о которой часто забывают — выбором бокала для {name}. Рассказываю, какой фужер выбрать!",
+        ]
+    elif tone == "expert":
+        intro_phrases = [
+            f"Как эксперт по бокалам, я часто слышу: «{name} можно пить из любого бокала». Это заблуждение. Разберём, какой бокал оптимален.",
+            f"Правильный бокал для игристого — это не просто традиция, а способ раскрыть всю палитру вкуса. Сегодня — о бокалах для {name}.",
+        ]
+    elif tone == "casual":
+        intro_phrases = [
+            f"Знаете, что делает {name} ещё вкуснее? Правильный бокал! Без сложных терминов — просто о том, в чём подавать.",
+            f"Давайте честно: вы подаёте {name} в правильном бокале? Рассказываю, какой выбрать, чтобы было идеально.",
+        ]
+    else:  # luxurious
+        intro_phrases = [
+            f"{name} — вино, достойное изысканной подачи. Позвольте раскрыть секреты выбора бокала, который подчеркнёт каждую ноту этого великолепного игристого.",
+            f"Когда речь заходит о {name}, каждая деталь имеет значение. Особенно — бокал, в котором вы подаёте это благородное игристое.",
+        ]
+
+    body_sections = [
+        f"{desc}. Для этого типа игристого ключевой момент — сохранение пузырьков и раскрытие ароматики. Именно поэтому классическая флюте — не всегда лучший выбор.",
+        f"Современные сомелье рекомендуют бокал типа «тюльпан» для большинства игристых вин — он лучше раскрывает ароматику и при этом сохраняет элегантный перляж.",
+    ]
+
+    glass_section = f"""Рекомендация по бокалу:
+
+🫗 Тип: {sparkling_info['glass_type']}
+📐 Форма: {sparkling_info['glass_description']}
+📏 Объём: {sparkling_info['glass_volume']}
+
+Почему именно этот бокал? {sparkling_info['glass_why']}"""
+
+    extra_long = [
+        f"Интересный факт: традиция подавать игристое в узких флюте уходит корнями в XVII век, но современные сомелье предпочитают тюльпан — он раскрывает вину пространство для дыхания.",
+        f"Помните: температура подачи игристого — 6-8°C. Правильный бокал на длинной ножке помогает не нагревать вино от тепла рук.",
+        f"Совет от эксперта: никогда не мойте бокалы для игристого обычным моющим средством — ополаскивайте горячей водой без химии, чтобы не разрушить пузырьки.",
+    ]
+
+    intro = random.choice(intro_phrases)
+    body = "\n\n".join(body_sections)
+
+    if length == "short":
+        content = f"{intro}\n\n{body}\n\n{glass_section}"
+    elif length == "medium":
+        extra = random.choice(extra_long)
+        content = f"{intro}\n\n{body}\n\n{extra}\n\n{glass_section}"
+    else:
+        content = f"{intro}\n\n{body}\n\n" + "\n\n".join(extra_long) + f"\n\n{glass_section}"
+
+    return content
+
+
+def generate_hashtags_still(wine_color, grape, mood):
+    """
+    Генерирует хэштеги для тихого вина.
     """
     hashtags = list(BASE_HASHTAGS)
 
-    # Добавляем специфичные хэштеги
     grape_tag = f"#{grape.lower().replace(' ', '')}"
     if grape_tag not in hashtags:
         hashtags.append(grape_tag)
 
-    if wine_type == "sparkling":
-        hashtags.extend(["#игристое", "#шампанское", "#игристоевино"])
-    else:
-        hashtags.append(f"#{wine_color}евино")
+    hashtags.append(f"#{wine_color}евино")
 
     if mood == "romantic":
         hashtags.extend(["#романтическийвечер", "#винныйвечер"])
@@ -461,7 +621,30 @@ def generate_hashtags(wine_type, wine_color, grape, mood):
     elif mood == "relaxed":
         hashtags.extend(["#расслабление", "#винныйотдых"])
 
-    # Убираем дубликаты
+    return list(dict.fromkeys(hashtags))
+
+
+def generate_hashtags_sparkling(sparkling_name, mood):
+    """
+    Генерирует хэштеги для игристого вина.
+    """
+    hashtags = list(BASE_HASHTAGS)
+
+    hashtags.extend(["#игристое", "#игристоевино", "#пузырьки"])
+
+    name_tag = f"#{sparkling_name.lower().replace(' ', '')}"
+    if name_tag not in hashtags:
+        hashtags.append(name_tag)
+
+    if mood == "romantic":
+        hashtags.extend(["#романтическийвечер", "#шампанское"])
+    elif mood == "happy":
+        hashtags.extend(["#праздник", "#тост"])
+    elif mood == "expert":
+        hashtags.extend(["#советсомелье", "#игристоевино"])
+    elif mood == "relaxed":
+        hashtags.extend(["#расслабление", "#аперитив"])
+
     return list(dict.fromkeys(hashtags))
 
 
@@ -472,60 +655,43 @@ def generate_cta():
     return f"{CTA_TEXT}\n\n👉 {CTA_BUTTON_TEXT}: {CTA_LINK}"
 
 
-def generate_post(wine_type, wine_color, grape, mood):
+def generate_post_still(wine_color, grape, mood):
     """
-    Основная функция генерации поста.
-    Собирает все элементы вместе.
+    Генерация поста для тихого вина.
     """
-    # Исправляем название сорта
     corrected_grape, was_corrected = correct_grape_name(grape)
 
-    # Определяем тип бокала
-    if wine_type == "sparkling":
-        glass_info = SPARKLING_GLASS
-    else:
-        glass_info = GLASS_RECOMMENDATIONS.get(corrected_grape)
-        if not glass_info:
-            # Если сорт не найден — используем универсальную рекомендацию
-            if wine_color == "красное":
-                glass_info = {
-                    "glass_type": "Универсальный для красного вина",
-                    "description": "Бокал среднего размера с округлым туловом и зауженным верхом, объёмом 500-650 мл",
-                    "volume": "500-650 мл",
-                    "why": f"Универсальный бокал для красного вина подходит для большинства сортов, включая {corrected_grape}. Округлая форма обеспечивает достаточную аэрацию, а зауженный край концентрирует ароматы."
-                }
-            elif wine_color == "белое":
-                glass_info = {
-                    "glass_type": "Универсальный для белого вина",
-                    "description": "Бокал с узким туловом на длинной ножке, объёмом 350-450 мл",
-                    "volume": "350-450 мл",
-                    "why": f"Универсальный бокал для белого вина сохраняет прохладу и подчёркивает свежесть {corrected_grape}. Узкая форма концентрирует ароматы и направляет вино к передней части нёба."
-                }
-            else:  # розовое
-                glass_info = {
-                    "glass_type": "Универсальный для розового вина",
-                    "description": "Бокал среднего размера с универсальной формой, объёмом 400-500 мл",
-                    "volume": "400-500 мл",
-                    "why": f"Универсальный бокал для розового вина идеально подходит для {corrected_grape}. Раскрывает цветочные и фруктовые ноты, сохраняя свежесть и лёгкость."
-                }
+    glass_info = GLASS_RECOMMENDATIONS.get(corrected_grape)
+    if not glass_info:
+        if wine_color == "красное":
+            glass_info = {
+                "glass_type": "Универсальный для красного вина",
+                "description": "Бокал среднего размера с округлым туловом и зауженным верхом, объёмом 500-650 мл",
+                "volume": "500-650 мл",
+                "why": f"Универсальный бокал для красного вина подходит для большинства сортов, включая {corrected_grape}. Округлая форма обеспечивает достаточную аэрацию, а зауженный край концентрирует ароматы."
+            }
+        elif wine_color == "белое":
+            glass_info = {
+                "glass_type": "Универсальный для белого вина",
+                "description": "Бокал с узким туловом на длинной ножке, объёмом 350-450 мл",
+                "volume": "350-450 мл",
+                "why": f"Универсальный бокал для белого вина сохраняет прохладу и подчёркивает свежесть {corrected_grape}. Узкая форма концентрирует ароматы и направляет вино к передней части нёба."
+            }
+        else:
+            glass_info = {
+                "glass_type": "Универсальный для розового вина",
+                "description": "Бокал среднего размера с универсальной формой, объёмом 400-500 мл",
+                "volume": "400-500 мл",
+                "why": f"Универсальный бокал для розового вина идеально подходит для {corrected_grape}. Раскрывает цветочные и фруктовые ноты, сохраняя свежесть и лёгкость."
+            }
 
-    # Генерируем эмодзи
-    emojis = get_emoji_set(mood, EMOJI_COUNT)
-
-    # Генерируем заголовок
-    title = generate_title(corrected_grape, wine_type, wine_color, TITLE_STYLE, emojis)
-
-    # Генерируем основной текст
-    body = generate_post_body(wine_type, wine_color, corrected_grape, glass_info, mood, TONE, POST_LENGTH)
-
-    # Генерируем хэштеги
-    hashtags = generate_hashtags(wine_type, wine_color, corrected_grape, mood)
+    emojis = get_emoji_set(mood, EMOJI_COUNT, is_sparkling=False)
+    title = generate_title_still(corrected_grape, wine_color, TITLE_STYLE, emojis)
+    body = generate_post_body_still(wine_color, corrected_grape, glass_info, mood, TONE, POST_LENGTH)
+    hashtags = generate_hashtags_still(wine_color, corrected_grape, mood)
     hashtags_text = " ".join(hashtags)
-
-    # Генерируем CTA
     cta = generate_cta()
 
-    # Собираем финальный пост
     correction_note = f"\n⚠️ Мы немного скорректировали написание сорта: «{grape}» → «{corrected_grape}»\n" if was_corrected else ""
 
     full_post = f"""{title}
@@ -552,6 +718,51 @@ def generate_post(wine_type, wine_color, grape, mood):
     }
 
 
+def generate_post_sparkling(sparkling_key, mood):
+    """
+    Генерация поста для игристого вина.
+    """
+    sparkling_info = SPARKLING_TYPES.get(sparkling_key)
+    if not sparkling_info:
+        sparkling_info = {
+            "name": sparkling_key.capitalize(),
+            "description": "Игристое вино",
+            "glass_type": "Тулип (фужер-тюльпан)",
+            "glass_description": "Бокал с вытянутым туловом, слегка расширяющимся кверху, объёмом 200-300 мл",
+            "glass_volume": "200-300 мл",
+            "glass_why": "Тулип — универсальный выбор для игристых вин. Раскрывает ароматику и сохраняет пузырьки."
+        }
+
+    emojis = get_emoji_set(mood, EMOJI_COUNT, is_sparkling=True)
+    title = generate_title_sparkling(sparkling_info["name"], TITLE_STYLE, emojis)
+    body = generate_post_body_sparkling(sparkling_info, mood, TONE, POST_LENGTH)
+    hashtags = generate_hashtags_sparkling(sparkling_info["name"], mood)
+    hashtags_text = " ".join(hashtags)
+    cta = generate_cta()
+
+    full_post = f"""{title}
+
+{body}
+
+🏷 Хэштеги:
+{hashtags_text}
+
+{cta}"""
+
+    return {
+        "title": title,
+        "body": body,
+        "glass_type": sparkling_info["glass_type"],
+        "glass_description": sparkling_info["glass_description"],
+        "glass_volume": sparkling_info["glass_volume"],
+        "glass_why": sparkling_info["glass_why"],
+        "sparkling_name": sparkling_info["name"],
+        "hashtags": hashtags_text,
+        "cta": cta,
+        "full_post": full_post,
+    }
+
+
 @app.route("/")
 def index():
     """Главная страница с формой."""
@@ -562,40 +773,46 @@ def index():
 def generate():
     """Обработка формы и генерация поста."""
     wine_type = request.form.get("wine_type", "").strip()
-    wine_color = request.form.get("wine_color", "").strip()
-    grape = request.form.get("grape", "").strip()
     mood = request.form.get("mood", "").strip()
-    champagne_type = request.form.get("champagne_type", "").strip()
 
-    # Проверка обязательных полей
     errors = []
     if not wine_type:
         errors.append("Выберите тип вина (тихое или игристое)")
-    if not wine_color:
-        errors.append("Выберите цвет вина")
-    if not grape:
-        errors.append("Введите сорт винограда")
     if not mood:
         errors.append("Выберите настроение поста")
 
     if errors:
         return jsonify({"error": " | ".join(errors)})
 
-    # Генерируем пост
-    result = generate_post(wine_type, wine_color, grape, mood)
+    # Тихое вино: нужны цвет и сорт
+    if wine_type == "still":
+        wine_color = request.form.get("wine_color", "").strip()
+        grape = request.form.get("grape", "").strip()
 
-    # Если игристое — добавляем уточнение про шампанское
-    if wine_type == "sparkling" and champagne_type:
-        if champagne_type == "champagne":
-            result["full_post"] = result["full_post"].replace(
-                "Для игристого вина",
-                "Для шампанского"
-            )
-        elif champagne_type == "sparkling_wine":
-            result["full_post"] = result["full_post"].replace(
-                "Для игристого вина",
-                "Для игристого вина"
-            )
+        if not wine_color:
+            errors.append("Выберите цвет вина")
+        if not grape:
+            errors.append("Введите сорт винограда")
+
+        if errors:
+            return jsonify({"error": " | ".join(errors)})
+
+        result = generate_post_still(wine_color, grape, mood)
+
+    # Игристое: нужен подтип
+    elif wine_type == "sparkling":
+        sparkling_key = request.form.get("sparkling_type", "").strip()
+
+        if not sparkling_key:
+            errors.append("Выберите тип игристого вина")
+
+        if errors:
+            return jsonify({"error": " | ".join(errors)})
+
+        result = generate_post_sparkling(sparkling_key, mood)
+
+    else:
+        return jsonify({"error": "Неизвестный тип вина"})
 
     return jsonify(result)
 

@@ -155,8 +155,67 @@ body {
 }
 
 /* ============================================================
-   НАСТРОЕНИЕ (карточки выбора)
-   ============================================================ */
+    ТИП ВИНА (карточки выбора)
+    ============================================================ */
+.wine-type-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.wine-type-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 16px;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--color-bg);
+}
+
+.wine-type-card:hover {
+    border-color: var(--color-primary-light);
+    background: rgba(114, 47, 55, 0.05);
+}
+
+.wine-type-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.wine-type-card:has(input[type="radio"]:checked) {
+    border-color: var(--color-primary);
+    background: rgba(114, 47, 55, 0.08);
+    box-shadow: 0 0 0 2px rgba(114, 47, 55, 0.15);
+}
+
+.wine-type-icon {
+    font-size: 2rem;
+}
+
+.wine-type-text {
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* Секции тихого/игристого с анимацией появления */
+.still-sparkling-section {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+    НАСТРОЕНИЕ (карточки выбора)
+    ============================================================ */
 .mood-options {
     display: grid;
     grid-template-columns: repeat(4, 1fr);

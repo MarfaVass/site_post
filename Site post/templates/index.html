@@ -21,56 +21,76 @@
             <!-- Форма -->
             <section class="form-section">
                 <form id="postForm" class="post-form">
-                    <!-- Тип вина -->
+                    <!-- Шаг 1: Тип вина -->
                     <div class="form-group">
-                        <label for="wine_type" class="form-label">
+                        <label class="form-label">
                             <span class="label-icon">🍷</span>
                             Тип вина <span class="required">*</span>
                         </label>
-                        <select id="wine_type" name="wine_type" class="form-select" required>
-                            <option value="" disabled selected>Выберите тип вина</option>
-                            <option value="still">Тихое</option>
-                            <option value="sparkling">Игристое</option>
-                        </select>
+                        <div class="wine-type-options">
+                            <label class="wine-type-card">
+                                <input type="radio" name="wine_type" value="still" id="wineTypeStill" required>
+                                <span class="wine-type-icon">🍷</span>
+                                <span class="wine-type-text">Тихое</span>
+                            </label>
+                            <label class="wine-type-card">
+                                <input type="radio" name="wine_type" value="sparkling" id="wineTypeSparkling">
+                                <span class="wine-type-icon">🥂</span>
+                                <span class="wine-type-text">Игристое</span>
+                            </label>
+                        </div>
                     </div>
 
-                    <!-- Уточнение для игристого (скрыто по умолчанию) -->
-                    <div id="champagne_section" class="form-group hidden">
-                        <label for="champagne_type" class="form-label">
-                            <span class="label-icon">🍾</span>
-                            Уточните тип игристого <span class="required">*</span>
-                        </label>
-                        <select id="champagne_type" name="champagne_type" class="form-select">
-                            <option value="" disabled selected>Выберите тип</option>
-                            <option value="champagne">Шампанское</option>
-                            <option value="sparkling_wine">Игристое вино</option>
-                        </select>
+                    <!-- Шаг 2 (тихое): Цвет вина -->
+                    <div id="stillSection" class="still-sparkling-section hidden">
+                        <div class="form-group">
+                            <label for="wine_color" class="form-label">
+                                <span class="label-icon">🎨</span>
+                                Цвет вина <span class="required">*</span>
+                            </label>
+                            <select id="wine_color" name="wine_color" class="form-select">
+                                <option value="" disabled selected>Выберите цвет вина</option>
+                                <option value="красное">Красное</option>
+                                <option value="белое">Белое</option>
+                                <option value="розовое">Розовое</option>
+                            </select>
+                        </div>
+
+                        <!-- Шаг 3 (тихое): Сорт винограда -->
+                        <div class="form-group">
+                            <label for="grape" class="form-label">
+                                <span class="label-icon">🍇</span>
+                                Сорт винограда <span class="required">*</span>
+                            </label>
+                            <input type="text" id="grape" name="grape" class="form-input"
+                                   placeholder="Например: Каберне Совиньон, Шардоне, Пино Нуар..."
+                                   autocomplete="off">
+                            <p class="input-hint">Введите сорт — мы автоматически исправим возможные ошибки в написании</p>
+                        </div>
                     </div>
 
-                    <!-- Цвет вина -->
-                    <div class="form-group">
-                        <label for="wine_color" class="form-label">
-                            <span class="label-icon">🎨</span>
-                            Цвет вина <span class="required">*</span>
-                        </label>
-                        <select id="wine_color" name="wine_color" class="form-select" required>
-                            <option value="" disabled selected>Выберите цвет вина</option>
-                            <option value="красное">Красное</option>
-                            <option value="белое">Белое</option>
-                            <option value="розовое">Розовое</option>
-                        </select>
-                    </div>
-
-                    <!-- Сорт винограда -->
-                    <div class="form-group">
-                        <label for="grape" class="form-label">
-                            <span class="label-icon">🍇</span>
-                            Сорт винограда <span class="required">*</span>
-                        </label>
-                        <input type="text" id="grape" name="grape" class="form-input" 
-                               placeholder="Например: Каберне Совиньон, Шардоне, Пино Нуар..." 
-                               required autocomplete="off">
-                        <p class="input-hint">Введите сорт — мы автоматически исправим возможные ошибки в написании</p>
+                    <!-- Шаг 2 (игристое): Тип игристого -->
+                    <div id="sparklingSection" class="still-sparkling-section hidden">
+                        <div class="form-group">
+                            <label for="sparkling_type" class="form-label">
+                                <span class="label-icon">🍾</span>
+                                Тип игристого вина <span class="required">*</span>
+                            </label>
+                            <select id="sparkling_type" name="sparkling_type" class="form-select">
+                                <option value="" disabled selected>Выберите тип игристого</option>
+                                <option value="prosecco">Просекко</option>
+                                <option value="champagne">Шампанское</option>
+                                <option value="moscato">Москато (Асти)</option>
+                                <option value="cava">Кава</option>
+                                <option value="cremant">Кремано</option>
+                                <option value="franciacorta">Франчакорто</option>
+                                <option value="lambusco">Ламбруско</option>
+                                <option value="pet_nat">Пет-нат (Pétillant Naturel)</option>
+                                <option value="sekt">Зект</option>
+                                <option value="english_sparkling">Английское игристое</option>
+                                <option value="trentodoc">Тренто DOC</option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Настроение поста -->
@@ -174,17 +194,28 @@
     </div>
 
     <script>
-        // Показываем/скрываем уточнение для игристого
-        document.getElementById('wine_type').addEventListener('change', function() {
-            const champagneSection = document.getElementById('champagne_section');
-            if (this.value === 'sparkling') {
-                champagneSection.classList.remove('hidden');
-                document.getElementById('champagne_type').required = true;
-            } else {
-                champagneSection.classList.add('hidden');
-                document.getElementById('champagne_type').required = false;
-                document.getElementById('champagne_type').value = '';
-            }
+        // Переключение между тихим и игристым
+        document.getElementById('wineTypeStill').addEventListener('change', function() {
+            document.getElementById('stillSection').classList.remove('hidden');
+            document.getElementById('sparklingSection').classList.add('hidden');
+            // Сбрасываем значение игристого
+            document.getElementById('sparkling_type').value = '';
+            // Делаем поля тихого обязательными
+            document.getElementById('wine_color').required = true;
+            document.getElementById('grape').required = true;
+        });
+
+        document.getElementById('wineTypeSparkling').addEventListener('change', function() {
+            document.getElementById('sparklingSection').classList.remove('hidden');
+            document.getElementById('stillSection').classList.add('hidden');
+            // Сбрасываем значения тихого
+            document.getElementById('wine_color').value = '';
+            document.getElementById('grape').value = '';
+            // Убираем обязательность полей тихого
+            document.getElementById('wine_color').required = false;
+            document.getElementById('grape').required = false;
+            // Делаем поле игристого обязательным
+            document.getElementById('sparkling_type').required = true;
         });
 
         // Отправка формы
@@ -224,7 +255,7 @@
                     document.getElementById('glassDescription').textContent = result.glass_description;
                     document.getElementById('glassVolume').textContent = result.glass_volume;
                     document.getElementById('glassWhy').textContent = result.glass_why;
-                    
+
                     // Форматируем текст поста
                     const postContent = result.full_post.replace(/\n/g, '<br>');
                     document.getElementById('postContent').innerHTML = postContent;
@@ -254,12 +285,10 @@
                 const copyMsg = document.getElementById('copyMessage');
                 copyMsg.classList.remove('hidden');
 
-                // Скрываем сообщение через 3 секунды
                 setTimeout(() => {
                     copyMsg.classList.add('hidden');
                 }, 3000);
             }).catch(() => {
-                // Фолбэк для старых браузеров
                 const textarea = document.createElement('textarea');
                 textarea.value = text;
                 document.body.appendChild(textarea);
