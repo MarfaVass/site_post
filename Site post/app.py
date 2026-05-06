@@ -1,24 +1,53 @@
 from flask import Flask, render_template, request, jsonify
 import requests
 import os
-import re
 import json
+import time
+import uuid
+import threading
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 
-# Загружаем переменные окружения из .env
 load_dotenv()
 
 app = Flask(__name__)
 
 # ============================================================
-# НАСТРОЙКИ PROXY API
+# PROXY API (генерация постов через AI)
 # ============================================================
 PROXY_API_KEY = os.getenv("PROXY_API_KEY", "")
 AI_MODEL = os.getenv("AI_MODEL", "gpt-4o-mini")
 PROXY_API_URL = "https://api.proxyapi.ru/openai/v1/chat/completions"
 
 # ============================================================
-# БАЗА ЗНАНИЙ О СОРТАХ ВИНОГРАДА (для проверки/исправления)
+# VK API (публикация в сообществе)
+# ============================================================
+VK_ACCESS_TOKEN = os.getenv("VK_ACCESS_TOKEN", "")
+VK_GROUP_ID = os.getenv("VK_GROUP_ID", "")
+VK_API_VERSION = "5.199"
+
+# ============================================================
+# ФАЙЛЫ ДАННЫХ (JSON, хранятся локально)
+# ============================================================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FAVORITES_FILE = os.path.join(BASE_DIR, "favorites.json")
+SCHEDULED_FILE = os.path.join(BASE_DIR, "scheduled_posts.json")
+
+
+def load_json(filepath):
+    if os.path.exists(filepath):
+        with open(filepath, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {"items": []}
+
+
+def save_json(filepath, data):
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+# ============================================================
+# БАЗА ЗНАНИЙ О СОРТАХ ВИНОГРАДА
 # ============================================================
 GRAPE_TYPOS = {
     "каберне": "Каберне Совиньон",
@@ -76,9 +105,6 @@ GRAPE_TYPOS = {
     "торонтесс": "Торронтес",
 }
 
-# ============================================================
-# СПИСОК ТИПОВ ИГРИСТЫХ (для отображения в UI и промпте)
-# ============================================================
 SPARKLING_TYPES_INFO = {
     "prosecco": "Просекко",
     "champagne": "Шампанское",
@@ -94,7 +120,7 @@ SPARKLING_TYPES_INFO = {
 }
 
 # ============================================================
-# НАСТРОЙКИ ИЗ VOICE.MD (можно менять прямо здесь)
+# НАСТРОЙКИ ИЗ VOICE.MD
 # ============================================================
 TONE = "expert"
 POST_LENGTH = "medium"
@@ -107,29 +133,17 @@ BASE_HASHTAGS = ["#бокалы", "#вино", "#сомелье", "#винный
 
 
 def correct_grape_name(grape_input):
-    """
-    Исправляет ошибки в написании сорта винограда.
-    """
     original = grape_input.strip()
     lower = original.lower().strip()
-
     if lower in GRAPE_TYPOS:
         return GRAPE_TYPOS[lower], True
-
     for typo, correct in GRAPE_TYPOS.items():
         if lower in typo or typo in lower:
             return correct, True
-
     return original.capitalize() if len(original) > 1 else original, False
 
 
 def generate_post_with_ai(wine_type, wine_color, grape, sparkling_type, mood):
-    """
-    Генерирует пост через Proxy API (языковая модель).
-    Возвращает dict с полями: title, body, glass_type, glass_description,
-    glass_volume, glass_why, brands, hashtags, cta, full_post
-    """
-    # Определяем контекст
     if wine_type == "still":
         wine_desc = f"тихое {wine_color}е вино из винограда сорта {grape}"
         glass_context = f"тип вина: тихое {wine_color}е, сорт винограда: {grape}"
@@ -138,7 +152,6 @@ def generate_post_with_ai(wine_type, wine_color, grape, sparkling_type, mood):
         wine_desc = f"игристое вино типа {sparkling_name}"
         glass_context = f"тип вина: игристое ({sparkling_name})"
 
-    # Настроение
     mood_descriptions = {
         "happy": "радостное, позитивное, с лёгким энтузиазмом",
         "romantic": "романтичное, тёплое, с нотками нежности",
@@ -147,7 +160,6 @@ def generate_post_with_ai(wine_type, wine_color, grape, sparkling_type, mood):
     }
     mood_desc = mood_descriptions.get(mood, "нейтральное")
 
-    # Длина
     length_descriptions = {
         "short": "короткий (2-3 абзаца основной части)",
         "medium": "средний (4-5 абзацев основной части)",
@@ -155,7 +167,6 @@ def generate_post_with_ai(wine_type, wine_color, grape, sparkling_type, mood):
     }
     length_desc = length_descriptions.get(POST_LENGTH, "средний")
 
-    # Стиль заголовка
     title_descriptions = {
         "question": "вопросительный",
         "statement": "утвердительный",
@@ -164,7 +175,6 @@ def generate_post_with_ai(wine_type, wine_color, grape, sparkling_type, mood):
     }
     title_desc = title_descriptions.get(TITLE_STYLE, "интригующий")
 
-    # Тон
     tone_descriptions = {
         "friendly": "дружелюбный, тёплый",
         "expert": "экспертный, авторитетный",
@@ -173,7 +183,6 @@ def generate_post_with_ai(wine_type, wine_color, grape, sparkling_type, mood):
     }
     tone_desc = tone_descriptions.get(TONE, "экспертный")
 
-    # Количество эмодзи
     emoji_descriptions = {
         "none": "без эмодзи",
         "few": "1-3 эмодзи",
@@ -207,24 +216,23 @@ def generate_post_with_ai(wine_type, wine_color, grape, sparkling_type, mood):
   "emojis": "Массив из 2-4 эмодзи для поста"
 }}
 
-СТРУКТУРА ПОСТА (модель должна учитывать):
-1. Заголовок: {title_desc} стиль, без markdown-символов, без #
-2. Вступление: вовлекающее читателя
+СТРУКТУРА ПОСТА:
+1. Заголовок: {title_desc} стиль
+2. Вступление: вовлекающее
 3. Основной текст: о вине, ароматах, вкусе, важности бокала
 4. Рекомендация по бокалу: тип, форма, объём, объяснение
-5. Рекомендации по брендам: категории, примеры производителей
+5. Рекомендации по брендам
 6. CTA: мягкий призыв с ссылкой на {CTA_LINK}
 7. Хэштеги: 3-7 штук
 
-Базовые хэштеги для включения: {hashtags_str}
+Базовые хэштеги: {hashtags_str}
 
 ВАЖНО:
-- НЕ используй markdown (**, ###, *, _) в значениях полей
-- Каждый пост должен быть оригинальным
-- Пиши на русском языке
-- Объясняй, почему выбран именно такой бокал
-- CTA должен быть мягким и естественным
-- Ответ должен быть ТОЛЬКО валидным JSON, без дополнительного текста"""
+- НЕ используй markdown (**, ###, *, _) в значениях
+- Пиши на русском
+- Объясняй, почему выбран такой бокал
+- CTA мягкий и естественный
+- Ответ ТОЛЬКО валидный JSON"""
 
     user_prompt = f"Напиши пост про бокал для: {wine_desc}. Настроение: {mood_desc}. Ответь в формате JSON."
 
@@ -249,25 +257,32 @@ def generate_post_with_ai(wine_type, wine_color, grape, sparkling_type, mood):
         )
 
         if response.status_code != 200:
-            return {
-                "error": f"Ошибка API: {response.status_code}. {response.text[:200]}"
-            }
+            return {"error": f"Ошибка API: {response.status_code}. {response.text[:200]}"}
 
         data = response.json()
         ai_text = data["choices"][0]["message"]["content"].strip()
-
-        # Парсим JSON-ответ
         ai_data = json.loads(ai_text)
 
-        # Собираем полный пост из секций
         emojis = " ".join(ai_data.get("emojis", ["🍷", "✨"]))
         title = ai_data.get("title", "Рекомендация по бокалу")
         title_with_emoji = f"{emojis} {title}" if emojis else title
 
         hashtags = ai_data.get("hashtags", BASE_HASHTAGS)
-        hashtags_str = " ".join(hashtags)
+        hashtags_str_out = " ".join(hashtags)
 
-        full_post = f"{title_with_emoji}\n\n{ai_data.get('intro', '')}\n\n{ai_data.get('body', '')}\n\nРекомендация по бокалу:\n🫗 Тип: {ai_data.get('glass_type', '')}\n📐 Форма: {ai_data.get('glass_description', '')}\n📏 Объём: {ai_data.get('glass_volume', '')}\n\nПочему: {ai_data.get('glass_why', '')}\n\n{ai_data.get('brands', '')}\n\n{ai_data.get('cta', '')}\n\n🏷 Хэштеги:\n{hashtags_str}"
+        full_post = (
+            f"{title_with_emoji}\n\n"
+            f"{ai_data.get('intro', '')}\n\n"
+            f"{ai_data.get('body', '')}\n\n"
+            f"Рекомендация по бокалу:\n"
+            f"🫗 Тип: {ai_data.get('glass_type', '')}\n"
+            f"📐 Форма: {ai_data.get('glass_description', '')}\n"
+            f"📏 Объём: {ai_data.get('glass_volume', '')}\n\n"
+            f"Почему: {ai_data.get('glass_why', '')}\n\n"
+            f"{ai_data.get('brands', '')}\n\n"
+            f"{ai_data.get('cta', '')}\n\n"
+            f"🏷 Хэштеги:\n{hashtags_str_out}"
+        )
 
         return {
             "title": title_with_emoji,
@@ -277,7 +292,7 @@ def generate_post_with_ai(wine_type, wine_color, grape, sparkling_type, mood):
             "glass_volume": ai_data.get("glass_volume", ""),
             "glass_why": ai_data.get("glass_why", ""),
             "brands": ai_data.get("brands", ""),
-            "hashtags": hashtags_str,
+            "hashtags": hashtags_str_out,
             "cta": ai_data.get("cta", ""),
             "full_post": full_post,
         }
@@ -290,15 +305,170 @@ def generate_post_with_ai(wine_type, wine_color, grape, sparkling_type, mood):
         return {"error": f"Неизвестная ошибка: {str(e)}"}
 
 
+# ============================================================
+# VK API — ПУБЛИКАЦИЯ ПОСТОВ
+# ============================================================
+
+def publish_to_vk_immediately(post_text):
+    """Публикует пост в сообществе ВКонтакте немедленно."""
+    if not VK_ACCESS_TOKEN or not VK_GROUP_ID:
+        return {"error": "VK не настроен. Добавьте VK_ACCESS_TOKEN и VK_GROUP_ID в .env файл. См. VK_SETUP.md"}
+
+    try:
+        url = "https://api.vk.com/method/wall.post"
+        params = {
+            "owner_id": VK_GROUP_ID,
+            "from_group": 1,
+            "message": post_text,
+            "access_token": VK_ACCESS_TOKEN,
+            "v": VK_API_VERSION,
+        }
+
+        response = requests.post(url, data=params, timeout=30)
+        result = response.json()
+
+        if "response" in result and "post_id" in result["response"]:
+            post_id = result["response"]["post_id"]
+            return {"success": True, "post_id": post_id}
+        elif "error" in result:
+            error_msg = result["error"].get("error_msg", "Неизвестная ошибка VK")
+            return {"error": f"Ошибка VK: {error_msg}"}
+        else:
+            return {"error": f"Неизвестный ответ VK API: {result}"}
+
+    except Exception as e:
+        return {"error": f"Ошибка при публикации в VK: {str(e)}"}
+
+
+def schedule_vk_post(post_text, publish_date):
+    """
+    Сохраняет пост в очередь на публикацию.
+    publish_date — Unix timestamp (UTC).
+    """
+    if not VK_ACCESS_TOKEN or not VK_GROUP_ID:
+        return {"error": "VK не настроен. Добавьте VK_ACCESS_TOKEN и VK_GROUP_ID в .env файл. См. VK_SETUP.md"}
+
+    scheduled = load_json(SCHEDULED_FILE)
+
+    post_entry = {
+        "id": str(uuid.uuid4()),
+        "text": post_text,
+        "publish_date": publish_date,
+        "created_at": datetime.now().isoformat(),
+        "status": "scheduled",
+    }
+
+    scheduled["items"].append(post_entry)
+    save_json(SCHEDULED_FILE, scheduled)
+
+    return {"success": True, "schedule_id": post_entry["id"]}
+
+
+def get_scheduled_posts():
+    """Возвращает список запланированных постов."""
+    scheduled = load_json(SCHEDULED_FILE)
+    now = int(time.time())
+
+    # Помечаем просроченные как missed
+    for item in scheduled["items"]:
+        if item["status"] == "scheduled" and item["publish_date"] <= now:
+            item["status"] = "missed"
+
+    save_json(SCHEDULED_FILE, scheduled)
+    return scheduled["items"]
+
+
+def delete_scheduled_post(post_id):
+    """Удаляет запланированный пост."""
+    scheduled = load_json(SCHEDULED_FILE)
+    scheduled["items"] = [i for i in scheduled["items"] if i["id"] != post_id]
+    save_json(SCHEDULED_FILE, scheduled)
+    return {"success": True}
+
+
+def check_and_publish_scheduled():
+    """
+    Фоновая задача: проверяет, есть ли посты для публикации,
+    и публикует их через VK API.
+    """
+    scheduled = load_json(SCHEDULED_FILE)
+    now = int(time.time())
+    updated = False
+
+    for item in scheduled["items"]:
+        if item["status"] == "scheduled" and item["publish_date"] <= now:
+            result = publish_to_vk_immediately(item["text"])
+            if result.get("success"):
+                item["status"] = "published"
+                item["vk_post_id"] = result.get("post_id")
+            else:
+                item["status"] = "failed"
+                item["error"] = result.get("error", "")
+            updated = True
+
+    if updated:
+        save_json(SCHEDULED_FILE, scheduled)
+
+
+def start_scheduler():
+    """Запускает фоновый поток проверки запланированных постов."""
+    def scheduler_loop():
+        while True:
+            try:
+                check_and_publish_scheduled()
+            except Exception:
+                pass
+            time.sleep(30)
+
+    thread = threading.Thread(target=scheduler_loop, daemon=True)
+    thread.start()
+
+
+# ============================================================
+# ИЗБРАННОЕ
+# ============================================================
+
+def save_to_favorites(post_data):
+    """Сохраняет пост в избранное."""
+    favorites = load_json(FAVORITES_FILE)
+
+    entry = {
+        "id": str(uuid.uuid4()),
+        "title": post_data.get("title", ""),
+        "full_post": post_data.get("full_post", ""),
+        "glass_type": post_data.get("glass_type", ""),
+        "created_at": datetime.now().isoformat(),
+    }
+
+    favorites["items"].insert(0, entry)
+    save_json(FAVORITES_FILE, favorites)
+    return {"success": True, "favorite_id": entry["id"]}
+
+
+def get_favorites():
+    """Возвращает список избранных постов."""
+    return load_json(FAVORITES_FILE)["items"]
+
+
+def delete_favorite(favorite_id):
+    """Удаляет пост из избранного."""
+    favorites = load_json(FAVORITES_FILE)
+    favorites["items"] = [i for i in favorites["items"] if i["id"] != favorite_id]
+    save_json(FAVORITES_FILE, favorites)
+    return {"success": True}
+
+
+# ============================================================
+# РОУТЫ
+# ============================================================
+
 @app.route("/")
 def index():
-    """Главная страница с формой."""
     return render_template("index.html")
 
 
 @app.route("/generate", methods=["POST"])
 def generate():
-    """Обработка формы и генерация поста через AI."""
     wine_type = request.form.get("wine_type", "").strip()
     mood = request.form.get("mood", "").strip()
 
@@ -325,11 +495,8 @@ def generate():
 
         corrected_grape, was_corrected = correct_grape_name(grape)
         result = generate_post_with_ai(
-            wine_type="still",
-            wine_color=wine_color,
-            grape=corrected_grape,
-            sparkling_type=None,
-            mood=mood,
+            wine_type="still", wine_color=wine_color,
+            grape=corrected_grape, sparkling_type=None, mood=mood,
         )
 
         if "error" not in result:
@@ -346,11 +513,8 @@ def generate():
             return jsonify({"error": " | ".join(errors)})
 
         result = generate_post_with_ai(
-            wine_type="sparkling",
-            wine_color=None,
-            grape=None,
-            sparkling_type=sparkling_type,
-            mood=mood,
+            wine_type="sparkling", wine_color=None,
+            grape=None, sparkling_type=sparkling_type, mood=mood,
         )
 
     else:
@@ -359,8 +523,89 @@ def generate():
     return jsonify(result)
 
 
+@app.route("/publish", methods=["POST"])
+def publish():
+    """Публикует пост в ВКонтакте немедленно."""
+    data = request.get_json()
+    post_text = data.get("post_text", "").strip()
+
+    if not post_text:
+        return jsonify({"error": "Текст поста пустой"})
+
+    result = publish_to_vk_immediately(post_text)
+    return jsonify(result)
+
+
+@app.route("/schedule", methods=["POST"])
+def schedule():
+    """Сохраняет пост на отложенную публикацию."""
+    data = request.get_json()
+    post_text = data.get("post_text", "").strip()
+    schedule_time = data.get("schedule_time", "").strip()
+
+    if not post_text:
+        return jsonify({"error": "Текст поста пустой"})
+    if not schedule_time:
+        return jsonify({"error": "Выберите время публикации"})
+
+    try:
+        schedule_dt = datetime.strptime(schedule_time, "%Y-%m-%dT%H:%M")
+        schedule_ts = int(schedule_dt.replace(tzinfo=timezone.utc).timestamp())
+        now_ts = int(time.time())
+
+        if schedule_ts <= now_ts:
+            return jsonify({"error": "Время публикации должно быть в будущем"})
+
+        result = schedule_vk_post(post_text, schedule_ts)
+        return jsonify(result)
+
+    except ValueError:
+        return jsonify({"error": "Неверный формат времени"})
+
+
+@app.route("/scheduled", methods=["GET"])
+def scheduled_list():
+    """Список запланированных постов."""
+    items = get_scheduled_posts()
+    return jsonify({"items": items})
+
+
+@app.route("/scheduled/<post_id>", methods=["DELETE"])
+def scheduled_delete(post_id):
+    """Удаляет запланированный пост."""
+    return jsonify(delete_scheduled_post(post_id))
+
+
+@app.route("/favorites", methods=["GET"])
+def favorites_list():
+    """Список избранных постов."""
+    items = get_favorites()
+    return jsonify({"items": items})
+
+
+@app.route("/favorites", methods=["POST"])
+def favorites_save():
+    """Сохраняет пост в избранное."""
+    data = request.get_json()
+    result = save_to_favorites(data)
+    return jsonify(result)
+
+
+@app.route("/favorites/<favorite_id>", methods=["DELETE"])
+def favorites_delete(favorite_id):
+    """Удаляет пост из избранного."""
+    return jsonify(delete_favorite(favorite_id))
+
+
 if __name__ == "__main__":
     if not PROXY_API_KEY:
         print("ВНИМАНИЕ: PROXY_API_KEY не установлен в .env файле!")
-        print("Создайте файл .env и добавьте строку: PROXY_API_KEY=ваш_ключ")
+    if not VK_ACCESS_TOKEN:
+        print("ВНИМАНИЕ: VK_ACCESS_TOKEN не установлен. Публикация в VK не будет работать.")
+        print("См. VK_SETUP.md для инструкции по настройке.")
+
+    # Запускаем фоновый планировщик
+    start_scheduler()
+
+    print("Сервер запущен: http://127.0.0.1:5000")
     app.run(debug=True, host="127.0.0.1", port=5000)

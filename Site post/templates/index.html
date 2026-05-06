@@ -16,12 +16,24 @@
             <p class="subtitle">Экспертный контент о бокалах для вина — за пару кликов</p>
         </header>
 
-        <!-- Основной контент -->
-        <main class="main-content">
-            <!-- Форма -->
+        <!-- Навигация по вкладкам -->
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="generator" onclick="switchTab('generator')">
+                ✨ Генератор
+            </button>
+            <button class="tab-btn" data-tab="scheduled" onclick="switchTab('scheduled')">
+                ⏰ Отложенные
+            </button>
+            <button class="tab-btn" data-tab="favorites" onclick="switchTab('favorites')">
+                ❤️ Избранное
+            </button>
+        </nav>
+
+        <!-- Вкладка: Генератор -->
+        <main id="tab-generator" class="tab-content active">
             <section class="form-section">
                 <form id="postForm" class="post-form">
-                    <!-- Шаг 1: Тип вина -->
+                    <!-- Тип вина -->
                     <div class="form-group">
                         <label class="form-label">
                             <span class="label-icon">🍷</span>
@@ -41,7 +53,7 @@
                         </div>
                     </div>
 
-                    <!-- Шаг 2 (тихое): Цвет вина -->
+                    <!-- Тихое: цвет + сорт -->
                     <div id="stillSection" class="still-sparkling-section hidden">
                         <div class="form-group">
                             <label for="wine_color" class="form-label">
@@ -55,8 +67,6 @@
                                 <option value="розовое">Розовое</option>
                             </select>
                         </div>
-
-                        <!-- Шаг 3 (тихое): Сорт винограда -->
                         <div class="form-group">
                             <label for="grape" class="form-label">
                                 <span class="label-icon">🍇</span>
@@ -65,11 +75,11 @@
                             <input type="text" id="grape" name="grape" class="form-input"
                                    placeholder="Например: Каберне Совиньон, Шардоне, Пино Нуар..."
                                    autocomplete="off">
-                            <p class="input-hint">Введите сорт — мы автоматически исправим возможные ошибки в написании</p>
+                            <p class="input-hint">Мы автоматически исправим возможные ошибки в написании</p>
                         </div>
                     </div>
 
-                    <!-- Шаг 2 (игристое): Тип игристого -->
+                    <!-- Игристое: тип -->
                     <div id="sparklingSection" class="still-sparkling-section hidden">
                         <div class="form-group">
                             <label for="sparkling_type" class="form-label">
@@ -93,7 +103,7 @@
                         </div>
                     </div>
 
-                    <!-- Настроение поста -->
+                    <!-- Настроение -->
                     <div class="form-group">
                         <label class="form-label">
                             <span class="label-icon">✨</span>
@@ -130,7 +140,7 @@
                     </button>
                 </form>
 
-                <!-- Сообщение об ошибке -->
+                <!-- Ошибка -->
                 <div id="errorMessage" class="error-message hidden">
                     <span class="error-icon">⚠️</span>
                     <span id="errorText"></span>
@@ -141,18 +151,25 @@
             <section id="resultSection" class="result-section hidden">
                 <div class="result-header">
                     <h2>Готовый пост</h2>
-                    <button class="copy-btn" id="copyBtn" onclick="copyPost()">
-                        <span class="copy-icon">📋</span>
-                        Скопировать пост
-                    </button>
+                    <div class="result-actions">
+                        <button class="copy-btn" onclick="copyPost()">
+                            <span class="copy-icon">📋</span>
+                            Скопировать
+                        </button>
+                        <button class="favorite-btn" onclick="saveToFavorites()">
+                            <span class="fav-icon">♡</span>
+                            В избранное
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Сообщение о копировании -->
-                <div id="copyMessage" class="copy-message hidden">
-                    ✅ Пост скопирован!
-                </div>
+                <div id="copyMessage" class="copy-message hidden">✅ Пост скопирован!</div>
 
-                <!-- Информация о бокале -->
+                <!-- Сообщение об избранном -->
+                <div id="favMessage" class="fav-message hidden">❤️ Пост сохранён в избранное!</div>
+
+                <!-- Бокал -->
                 <div class="glass-info">
                     <h3 class="glass-info-title">🫗 Рекомендация по бокалу</h3>
                     <div class="glass-details">
@@ -175,21 +192,72 @@
                     </div>
                 </div>
 
-                <!-- Рекомендации по брендам -->
+                <!-- Бренды -->
                 <div id="brandsSection" class="brands-info hidden">
                     <h3 class="brands-info-title">🏷 Рекомендации по брендам</h3>
                     <p id="brandsText" class="brands-text"></p>
                 </div>
 
                 <!-- Текст поста -->
-                <div class="post-content" id="postContent">
-                    <!-- Здесь будет сгенерированный пост -->
+                <div class="post-content" id="postContent"></div>
+
+                <!-- Публикация -->
+                <div class="publish-section">
+                    <div class="publish-row">
+                        <button class="publish-btn" onclick="publishNow()">
+                            <span class="publish-icon">📤</span>
+                            Опубликовать ВКонтакте
+                        </button>
+                        <button class="schedule-toggle-btn" onclick="toggleSchedule()">
+                            <span class="schedule-icon">⏰</span>
+                            Отложить
+                        </button>
+                    </div>
+
+                    <!-- Планировщик -->
+                    <div id="scheduleSection" class="schedule-section hidden">
+                        <label class="form-label" for="scheduleTime">
+                            Выберите дату и время публикации:
+                        </label>
+                        <div class="schedule-row">
+                            <input type="datetime-local" id="scheduleTime" class="schedule-input">
+                            <button class="schedule-confirm-btn" onclick="schedulePost()">
+                                Запланировать
+                            </button>
+                        </div>
+                        <p class="schedule-hint">Минимальное время — через 1 минуту. Пост опубликуется автоматически.</p>
+                    </div>
                 </div>
 
-                <!-- Кнопка перехода в блог -->
+                <!-- Сообщение о публикации -->
+                <div id="publishMessage" class="publish-result hidden"></div>
+
+                <!-- Ссылка на Дзен -->
                 <a href="https://dzen.ru/razborexpert" target="_blank" class="dzen-link">
                     📖 Перейти в блог эксперта на Дзене
                 </a>
+            </section>
+        </main>
+
+        <!-- Вкладка: Отложенные посты -->
+        <main id="tab-scheduled" class="tab-content">
+            <section class="scheduled-section">
+                <h2 class="section-title">⏰ Отложенные посты</h2>
+                <p class="section-desc">Посты, которые будут опубликованы автоматически в заданное время</p>
+                <div id="scheduledList" class="scheduled-list">
+                    <p class="empty-message">Нет запланированных постов</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Вкладка: Избранное -->
+        <main id="tab-favorites" class="tab-content">
+            <section class="favorites-section">
+                <h2 class="section-title">❤️ Избранные посты</h2>
+                <p class="section-desc">Сохранённые посты для быстрого использования</p>
+                <div id="favoritesList" class="favorites-list">
+                    <p class="empty-message">Нет избранных постов</p>
+                </div>
             </section>
         </main>
 
@@ -200,13 +268,22 @@
     </div>
 
     <script>
-        // Переключение между тихим и игристым
+        // Переключение вкладок
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+
+            if (tabName === 'scheduled') loadScheduled();
+            if (tabName === 'favorites') loadFavorites();
+        }
+
+        // Переключение тихое/игристое
         document.getElementById('wineTypeStill').addEventListener('change', function() {
             document.getElementById('stillSection').classList.remove('hidden');
             document.getElementById('sparklingSection').classList.add('hidden');
-            // Сбрасываем значение игристого
             document.getElementById('sparkling_type').value = '';
-            // Делаем поля тихого обязательными
             document.getElementById('wine_color').required = true;
             document.getElementById('grape').required = true;
         });
@@ -214,30 +291,37 @@
         document.getElementById('wineTypeSparkling').addEventListener('change', function() {
             document.getElementById('sparklingSection').classList.remove('hidden');
             document.getElementById('stillSection').classList.add('hidden');
-            // Сбрасываем значения тихого
             document.getElementById('wine_color').value = '';
             document.getElementById('grape').value = '';
-            // Убираем обязательность полей тихого
             document.getElementById('wine_color').required = false;
             document.getElementById('grape').required = false;
-            // Делаем поле игристого обязательным
             document.getElementById('sparkling_type').required = true;
         });
 
-        // Отправка формы
+        // Установка минимального времени для планировщика (текущее время + 1 мин)
+        function setMinScheduleTime() {
+            const input = document.getElementById('scheduleTime');
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + 1);
+            const offset = now.getTimezoneOffset();
+            const local = new Date(now.getTime() - offset * 60000);
+            input.min = local.toISOString().slice(0, 16);
+        }
+        setMinScheduleTime();
+
+        // Генерация поста
         document.getElementById('postForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            // Скрываем предыдущие ошибки и результаты
             document.getElementById('errorMessage').classList.add('hidden');
             document.getElementById('resultSection').classList.add('hidden');
             document.getElementById('copyMessage').classList.add('hidden');
+            document.getElementById('favMessage').classList.add('hidden');
+            document.getElementById('publishMessage').classList.add('hidden');
 
-            // Собираем данные формы
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
 
-            // Показываем загрузку
             const btn = document.getElementById('generateBtn');
             btn.disabled = true;
             btn.innerHTML = '<span class="btn-icon">⏳</span> Генерируем...';
@@ -267,8 +351,10 @@
                         document.getElementById('brandsSection').classList.add('hidden');
                     }
 
-                    const postContent = result.full_post.replace(/\n/g, '<br>');
-                    document.getElementById('postContent').innerHTML = postContent;
+                    document.getElementById('postContent').innerHTML = result.full_post.replace(/\n/g, '<br>');
+
+                    // Сохраняем текущий пост для публикации
+                    window.currentPost = result.full_post;
 
                     document.getElementById('resultSection').classList.remove('hidden');
                     document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -277,24 +363,18 @@
                 document.getElementById('errorText').textContent = 'Произошла ошибка. Попробуйте снова.';
                 document.getElementById('errorMessage').classList.remove('hidden');
             } finally {
-                // Восстанавливаем кнопку
                 btn.disabled = false;
                 btn.innerHTML = '<span class="btn-icon">✨</span> Сформировать пост';
             }
         });
 
-        // Копирование поста
+        // Копирование
         function copyPost() {
-            const postContent = document.getElementById('postContent');
-            const text = postContent.innerText;
-
+            const text = document.getElementById('postContent').innerText;
             navigator.clipboard.writeText(text).then(() => {
-                const copyMsg = document.getElementById('copyMessage');
-                copyMsg.classList.remove('hidden');
-
-                setTimeout(() => {
-                    copyMsg.classList.add('hidden');
-                }, 3000);
+                const msg = document.getElementById('copyMessage');
+                msg.classList.remove('hidden');
+                setTimeout(() => msg.classList.add('hidden'), 3000);
             }).catch(() => {
                 const textarea = document.createElement('textarea');
                 textarea.value = text;
@@ -302,13 +382,236 @@
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
-
-                const copyMsg = document.getElementById('copyMessage');
-                copyMsg.classList.remove('hidden');
-                setTimeout(() => {
-                    copyMsg.classList.add('hidden');
-                }, 3000);
+                const msg = document.getElementById('copyMessage');
+                msg.classList.remove('hidden');
+                setTimeout(() => msg.classList.add('hidden'), 3000);
             });
+        }
+
+        // В избранное
+        async function saveToFavorites() {
+            if (!window.currentPost) return;
+
+            try {
+                const response = await fetch('/favorites', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: document.getElementById('glassType').textContent || 'Пост',
+                        full_post: window.currentPost,
+                        glass_type: document.getElementById('glassType').textContent,
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    const msg = document.getElementById('favMessage');
+                    msg.classList.remove('hidden');
+                    setTimeout(() => msg.classList.add('hidden'), 3000);
+                }
+            } catch (error) {
+                alert('Ошибка при сохранении в избранное');
+            }
+        }
+
+        // Показать/скрыть планировщик
+        function toggleSchedule() {
+            document.getElementById('scheduleSection').classList.toggle('hidden');
+        }
+
+        // Опубликовать сейчас
+        async function publishNow() {
+            if (!window.currentPost) return;
+
+            const msg = document.getElementById('publishMessage');
+            msg.textContent = '⏳ Публикуем...';
+            msg.className = 'publish-result';
+            msg.classList.remove('hidden', 'success', 'error');
+
+            try {
+                const response = await fetch('/publish', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ post_text: window.currentPost })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    msg.textContent = '✅ Пост опубликован в ВКонтакте! ID: ' + result.post_id;
+                    msg.className = 'publish-result success';
+                } else {
+                    msg.textContent = '❌ ' + (result.error || 'Ошибка публикации');
+                    msg.className = 'publish-result error';
+                }
+            } catch (error) {
+                msg.textContent = '❌ Ошибка соединения';
+                msg.className = 'publish-result error';
+            }
+        }
+
+        // Запланировать
+        async function schedulePost() {
+            if (!window.currentPost) return;
+
+            const time = document.getElementById('scheduleTime').value;
+            if (!time) {
+                alert('Выберите время публикации');
+                return;
+            }
+
+            const msg = document.getElementById('publishMessage');
+            msg.textContent = '⏳ Планируем...';
+            msg.className = 'publish-result';
+            msg.classList.remove('hidden', 'success', 'error');
+
+            try {
+                const response = await fetch('/schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ post_text: window.currentPost, schedule_time: time })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    msg.textContent = '✅ Пост запланирован! Опубликуется автоматически в заданное время.';
+                    msg.className = 'publish-result success';
+                    document.getElementById('scheduleSection').classList.add('hidden');
+                } else {
+                    msg.textContent = '❌ ' + (result.error || 'Ошибка планирования');
+                    msg.className = 'publish-result error';
+                }
+            } catch (error) {
+                msg.textContent = '❌ Ошибка соединения';
+                msg.className = 'publish-result error';
+            }
+        }
+
+        // Загрузка отложенных
+        async function loadScheduled() {
+            const list = document.getElementById('scheduledList');
+            list.innerHTML = '<p class="loading-message">Загрузка...</p>';
+
+            try {
+                const response = await fetch('/scheduled');
+                const data = await response.json();
+                const items = data.items || [];
+
+                if (items.length === 0) {
+                    list.innerHTML = '<p class="empty-message">Нет запланированных постов</p>';
+                    return;
+                }
+
+                list.innerHTML = items.map(item => {
+                    const date = new Date(item.publish_date * 1000).toLocaleString('ru-RU');
+                    let statusText = '';
+                    let statusClass = '';
+
+                    switch (item.status) {
+                        case 'scheduled': statusText = '⏳ В очереди'; statusClass = 'status-scheduled'; break;
+                        case 'published': statusText = '✅ Опубликован'; statusClass = 'status-published'; break;
+                        case 'failed': statusText = '❌ Ошибка'; statusClass = 'status-failed'; break;
+                        case 'missed': statusText = '⚠️ Пропущен'; statusClass = 'status-missed'; break;
+                    }
+
+                    const title = item.text.substring(0, 80) + (item.text.length > 80 ? '...' : '');
+
+                    return `
+                        <div class="scheduled-item">
+                            <div class="scheduled-item-header">
+                                <span class="scheduled-date">${date}</span>
+                                <span class="scheduled-status ${statusClass}">${statusText}</span>
+                            </div>
+                            <p class="scheduled-preview">${title}</p>
+                            ${item.status === 'scheduled' ? `
+                                <button class="delete-scheduled-btn" onclick="deleteScheduled('${item.id}')">
+                                    Удалить
+                                </button>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                list.innerHTML = '<p class="error-message-small">Ошибка загрузки</p>';
+            }
+        }
+
+        async function deleteScheduled(id) {
+            if (!confirm('Удалить этот пост из очереди?')) return;
+            await fetch(`/scheduled/${id}`, { method: 'DELETE' });
+            loadScheduled();
+        }
+
+        // Загрузка избранного
+        async function loadFavorites() {
+            const list = document.getElementById('favoritesList');
+            list.innerHTML = '<p class="loading-message">Загрузка...</p>';
+
+            try {
+                const response = await fetch('/favorites');
+                const data = await response.json();
+                const items = data.items || [];
+
+                if (items.length === 0) {
+                    list.innerHTML = '<p class="empty-message">Нет избранных постов</p>';
+                    return;
+                }
+
+                list.innerHTML = items.map(item => {
+                    const date = new Date(item.created_at).toLocaleString('ru-RU');
+                    const title = item.title || 'Пост';
+                    const preview = item.full_post.substring(0, 120) + '...';
+
+                    return `
+                        <div class="favorite-item">
+                            <div class="favorite-item-header">
+                                <h4 class="favorite-title">${title}</h4>
+                                <span class="favorite-date">${date}</span>
+                            </div>
+                            <p class="favorite-preview">${preview}</p>
+                            <div class="favorite-actions">
+                                <button class="use-favorite-btn" onclick="useFavorite('${item.id}')">
+                                    Использовать
+                                </button>
+                                <button class="delete-favorite-btn" onclick="deleteFavorite('${item.id}')">
+                                    Удалить
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                list.innerHTML = '<p class="error-message-small">Ошибка загрузки</p>';
+            }
+        }
+
+        async function deleteFavorite(id) {
+            if (!confirm('Удалить из избранного?')) return;
+            await fetch(`/favorites/${id}`, { method: 'DELETE' });
+            loadFavorites();
+        }
+
+        function useFavorite(id) {
+            fetch('/favorites')
+                .then(r => r.json())
+                .then(data => {
+                    const item = data.items.find(i => i.id === id);
+                    if (item) {
+                        window.currentPost = item.full_post;
+                        document.getElementById('glassType').textContent = item.glass_type || '';
+                        document.getElementById('glassDescription').textContent = '';
+                        document.getElementById('glassVolume').textContent = '';
+                        document.getElementById('glassWhy').textContent = '';
+                        document.getElementById('brandsSection').classList.add('hidden');
+                        document.getElementById('postContent').innerHTML = item.full_post.replace(/\n/g, '<br>');
+                        document.getElementById('resultSection').classList.remove('hidden');
+                        switchTab('generator');
+                        document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
         }
     </script>
 </body>
