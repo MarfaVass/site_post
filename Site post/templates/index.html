@@ -175,6 +175,12 @@
                     </div>
                 </div>
 
+                <!-- Рекомендации по брендам -->
+                <div id="brandsSection" class="brands-info hidden">
+                    <h3 class="brands-info-title">🏷 Рекомендации по брендам</h3>
+                    <p id="brandsText" class="brands-text"></p>
+                </div>
+
                 <!-- Текст поста -->
                 <div class="post-content" id="postContent">
                     <!-- Здесь будет сгенерированный пост -->
@@ -246,24 +252,25 @@
                 const result = await response.json();
 
                 if (result.error) {
-                    // Показываем ошибку
                     document.getElementById('errorText').textContent = result.error;
                     document.getElementById('errorMessage').classList.remove('hidden');
                 } else {
-                    // Заполняем результат
                     document.getElementById('glassType').textContent = result.glass_type;
                     document.getElementById('glassDescription').textContent = result.glass_description;
                     document.getElementById('glassVolume').textContent = result.glass_volume;
                     document.getElementById('glassWhy').textContent = result.glass_why;
 
-                    // Форматируем текст поста
+                    if (result.brands) {
+                        document.getElementById('brandsText').textContent = result.brands;
+                        document.getElementById('brandsSection').classList.remove('hidden');
+                    } else {
+                        document.getElementById('brandsSection').classList.add('hidden');
+                    }
+
                     const postContent = result.full_post.replace(/\n/g, '<br>');
                     document.getElementById('postContent').innerHTML = postContent;
 
-                    // Показываем секцию результата
                     document.getElementById('resultSection').classList.remove('hidden');
-
-                    // Плавная прокрутка к результату
                     document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             } catch (error) {

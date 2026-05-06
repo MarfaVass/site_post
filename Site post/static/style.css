@@ -444,8 +444,32 @@ body {
 }
 
 /* ============================================================
-   ТЕКСТ ПОСТА
-   ============================================================ */
+    РЕКОМЕНДАЦИИ ПО БРЕНДАМ
+    ============================================================ */
+.brands-info {
+    background: linear-gradient(135deg, rgba(212, 165, 116, 0.08), rgba(114, 47, 55, 0.05));
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.brands-info-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.2rem;
+    color: var(--color-primary);
+    margin-bottom: 12px;
+}
+
+.brands-text {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--color-text);
+}
+
+/* ============================================================
+    ТЕКСТ ПОСТА
+    ============================================================ */
 .post-content {
     background: var(--color-bg);
     border-radius: var(--radius-sm);
